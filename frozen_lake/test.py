@@ -66,13 +66,16 @@ def policy_iteration(env, gamma=1, theta=1e-8):
 def value_iteration(env, gamma=1, theta=1e-8):
     V = np.zeros(env.nS)
     # for i in range(10):
+    n = 0
     while True:
         delta = 0
         for s in range(env.nS):
             v = V[s]
             V[s] = max(q_from_v(env, V, s, gamma))
             delta = max(delta,abs(V[s]-v))
+        n += 1
         if delta < theta:
+            print(n)
             break
     policy = policy_improvement(env, V, gamma)
     return policy, V
@@ -88,7 +91,7 @@ policy1, V1 = value_iteration(env1, gamma=0.9)
 policy2, V2 = value_iteration(env2, gamma=0.9)
 policy3, V3 = value_iteration(env3, gamma=0.9)
 
-print(policy3)
+# print(policy3)
 plot_matrix(V3.reshape(env3.nrow,env3.ncol))
 
 
