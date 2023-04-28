@@ -20,6 +20,7 @@ UP = 3
 NOTHING = 4
 
 MAPS = {
+    "2x2": ["SF", "FG"],
     "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
     "5x5_wall": [
         "SFFFF",
@@ -201,6 +202,7 @@ class FrozenLakeEnv(Env):
         is_slippery=True,
         goal_reward = 1,
         step_cost = 0,
+        terminal_states = "GH",
         
     ):
         if desc is None and map_name is None:
@@ -213,6 +215,8 @@ class FrozenLakeEnv(Env):
 
         self.goal_reward = goal_reward
         self.step_cost = step_cost
+
+        self.terminal_states = terminal_states
 
         nA = 5
         nS = nrow * ncol
@@ -273,7 +277,7 @@ class FrozenLakeEnv(Env):
                 for a in range(self.nA):
                     li = self.P[s][a]
                     letter = desc[row, col]
-                    if letter in b"GH":
+                    if letter in str.encode(self.terminal_states):
                         li.append((1.0, s, 0, True))
                     else:
                         if is_slippery:
