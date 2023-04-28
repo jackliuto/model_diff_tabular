@@ -1,14 +1,58 @@
-from collections import defaultdict
-
+import pandas as pd 
 import numpy as np
-
+import matplotlib.pyplot as plt
+import matplotlib
+from typing import Tuple
+from collections import defaultdict
 import copy
 
-from frozen_lake_5action import FrozenLakeEnv
+def array_index_to_matplot_coords(i: int, j: int, n_cols: int) -> Tuple[int, int]:
+    """Converts an array index to a matplot coordinate"""
+    x = j
+    y = n_cols - i - 1
+    return x, y
 
-from plot_utils import plot_matrix
 
-from pprint import pprint
+def plot_matrix(
+    M: np.array, 
+    goal_coords: list = [],
+    img_width: int = 5, 
+    img_height: int = 5, 
+    title: str = None,
+    annotate_goal: bool = True
+    ) -> None: 
+    """
+    Plots a matrix as an image.
+    """
+    height, width = M.shape
+
+    fig = plt.figure(figsize=(img_width, img_width))
+    ax = fig.add_subplot(111, aspect='equal')
+    
+    for y in range(height):
+        for x in range(width):
+            # By default, the (0, 0) coordinate in matplotlib is the bottom left corner,
+            # so we need to invert the y coordinate to plot the matrix correctly
+            matplot_x, matplot_y = array_index_to_matplot_coords(x, y, height)
+            
+            # If there is a tuple of (x, y) in the goal_coords list, we color the cell gray 
+            if (x, y) in goal_coords:
+                ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='gray'))
+                if annotate_goal:
+                    ax.annotate(str(round(M[x][y],2)), xy=(matplot_x, matplot_y), ha='center', va='center')
+            else: 
+                ax.annotate(str(round(M[x][y],2)), xy=(matplot_x, matplot_y), ha='center', va='center')
+
+    offset = .5    
+    ax.set_xlim(-offset, width - offset)
+    ax.set_ylim(-offset, height - offset)
+
+    ax.hlines(y=np.arange(height+1)- offset, xmin=-offset, xmax=width-offset)
+    ax.vlines(x=np.arange(width+1) - offset, ymin=-offset, ymax=height-offset)
+
+    plt.title(title)
+    plt.show()
+
 
 def policy_evaluation(env, policy, gamma=1, theta=1e-8):
     V = np.zeros(env.nS)
@@ -76,69 +120,3 @@ def value_iteration(env, gamma=1, theta=1e-8):
             break
     policy = policy_improvement(env, V, gamma)
     return policy, V
-
-def value_iteration_gap_first(env, gamma=1, theta=1e-8):
-    V = np.zeros(env.nS)
-    for i in range(10):
-    # while True:
-        delta = 0
-        for s in range(env.nS):
-            v = V[s]
-            V[s] = max(q_from_v(env, V, s, gamma))
-            delta = max(delta,abs(V[s]-v))
-        if delta < theta:
-            break
-    policy = policy_improvement(env, V, gamma)
-    return policy, V
-
-    
-
-
-
-# env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7_1")
-# env2 = FrozenLakeEnv(is_slippery=False, map_name="7x7_2")
-# env3 = FrozenLakeEnv(is_slippery=False, map_name="5x5_wall")
-env4 = FrozenLakeEnv(is_slippery=False, map_name="2x2",terminal_states="H")
-
-# pprint(env.P)
-
-# policy1, V1 = value_iteration(env1, gamma=0.9)
-# policy2, V2 = value_iteration(env2, gamma=0.9)
-# policy3, V3 = value_iteration(env3, gamma=0.9)
-policy4, V4 = value_iteration(env4, gamma=1)
-
-print(V4)
-
-# print(policy3)
-# plot_matrix(V3.reshape(env3.nrow,env3.ncol))
-
-
-# V1_pi_1 = V1
-# V2_pi_2 = V2
-# V1_pi_2 = policy_evaluation(env1, policy2, gamma=0.9)
-# V2_pi_1 = policy_evaluation(env2, policy1, gamma=0.9)
-
-# Vdiff = V2_pi_2 - V1_pi_1 
-# Vdiff_lower = V2_pi_1 - V1_pi_1
-# Vdiff_upper = V2_pi_2 - V1_pi_2
-
-# print(policy1)
-
-# plot_matrix((Vdiff_upper - Vdiff_lower).reshape(env1.nrow,env1.ncol))
-# plot_matrix(V2.reshape(env1.nrow,env1.ncol))
-
-# plot_matrix(Vdiff.reshape(env1.nrow,env1.ncol))
-
-
-# print(V2_pi_1)
-# print(V1_pi_1)
-
-
-
-
-
-
-
-
-
-
