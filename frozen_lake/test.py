@@ -6,108 +6,34 @@ import copy
 
 from frozen_lake_5action import FrozenLakeEnv
 
-from plot_utils import plot_matrix
+from utils import plot_matrix
 
 from pprint import pprint
 
-def policy_evaluation(env, policy, gamma=1, theta=1e-8):
-    V = np.zeros(env.nS)
-    while True:
-        delta = 0
-        for s in range(env.nS):
-            Vs = 0
-            for a, action_prob in enumerate(policy[s]):
-                for prob, next_state, reward, done in env.P[s][a]:
-                    Vs += action_prob * prob * (reward + gamma * V[next_state])
-            delta = max(delta, np.abs(V[s]-Vs))
-            V[s] = Vs
-        if delta < theta:
-            break
-    return V
+from Models import DPAgent
 
-def q_from_v(env, V, s, gamma=1):
-    q = np.zeros(env.nA)
-    for a in range(env.nA):
-        for prob, next_state, reward, done in env.P[s][a]:
-            q[a] += prob * (reward + gamma * V[next_state])
-    return q
 
-def policy_improvement(env, V, gamma=1):
-    policy = np.zeros([env.nS, env.nA]) / env.nA
-    for s in range(env.nS):
-        q = q_from_v(env, V, s, gamma)
-        
-        # OPTION 1: construct a deterministic policy 
-        # policy[s][np.argmax(q)] = 1
-        
-        # OPTION 2: construct a stochastic policy that puts equal probability on maximizing actions
-        best_a = np.argwhere(q==np.max(q)).flatten()
-        policy[s] = np.sum([np.eye(env.nA)[i] for i in best_a], axis=0)/len(best_a)
-        
-    return policy
+env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7_1")
 
-def policy_iteration(env, gamma=1, theta=1e-8):
-    policy = np.ones([env.nS, env.nA]) / env.nA
-    while True:
-        V = policy_evaluation(env, policy, gamma, theta)
-        new_policy = policy_improvement(env, V)
-        
-        # OPTION 1: stop if the policy is unchanged after an improvement step
-        if (new_policy == policy).all():
-            break
-        
-        # OPTION 2: stop if the value function estimates for successive policies has converged
-        # if np.max(abs(policy_evaluation(env, policy) - policy_evaluation(env, new_policy))) < theta*1e2:
-        #    break;
-        
-        policy = copy.copy(new_policy)
-    return policy, V
+DPAgent_1 = DPAgent(env1, gamma=0.9, theta=1e-8)
 
-def value_iteration(env, gamma=1, theta=1e-8):
-    V = np.zeros(env.nS)
-    for i in range(10):
-    # while True:
-        delta = 0
-        for s in range(env.nS):
-            v = V[s]
-            V[s] = max(q_from_v(env, V, s, gamma))
-            delta = max(delta,abs(V[s]-v))
-        if delta < theta:
-            break
-    policy = policy_improvement(env, V, gamma)
-    return policy, V
+policy1, V1 = DPAgent_1.value_iteration()
 
-def value_iteration_gap_first(env, gamma=1, theta=1e-8):
-    V = np.zeros(env.nS)
-    for i in range(10):
-    # while True:
-        delta = 0
-        for s in range(env.nS):
-            v = V[s]
-            V[s] = max(q_from_v(env, V, s, gamma))
-            delta = max(delta,abs(V[s]-v))
-        if delta < theta:
-            break
-    policy = policy_improvement(env, V, gamma)
-    return policy, V
 
-    
+plot_matrix(V1.reshape(env1.nrow,env1.ncol))
 
 
 
 # env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7_1")
 # env2 = FrozenLakeEnv(is_slippery=False, map_name="7x7_2")
 # env3 = FrozenLakeEnv(is_slippery=False, map_name="5x5_wall")
-env4 = FrozenLakeEnv(is_slippery=False, map_name="2x2",terminal_states="H")
+# env4 = FrozenLakeEnv(is_slippery=False, map_name="2x2",terminal_states="H")
 
-# pprint(env.P)
 
 # policy1, V1 = value_iteration(env1, gamma=0.9)
 # policy2, V2 = value_iteration(env2, gamma=0.9)
 # policy3, V3 = value_iteration(env3, gamma=0.9)
-policy4, V4 = value_iteration(env4, gamma=1)
-
-print(V4)
+# policy4, V4 = value_iteration(env4, gamma=1)
 
 # print(policy3)
 # plot_matrix(V3.reshape(env3.nrow,env3.ncol))
