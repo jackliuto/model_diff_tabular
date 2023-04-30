@@ -63,8 +63,8 @@ class DPAgent:
 
     def value_iteration(self):
         V = np.zeros(self.env.nS)
-        for i in range(10):
-        # while True:
+        # for i in range(10):
+        while True:
             delta = 0
             for s in range(self.env.nS):
                 v = V[s]

@@ -13,7 +13,7 @@ from pprint import pprint
 from Models import DPAgent
 
 
-env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7_1")
+env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7")
 
 DPAgent_1 = DPAgent(env1, gamma=0.9, theta=1e-8)
 

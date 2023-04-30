@@ -21,7 +21,32 @@ NOTHING = 4
 
 MAPS = {
     "2x2": ["SF", "FG"],
-    "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
+    "3x3": ["SFF", "FFF", "FFG"],
+    "4x4": ["SFFF", "FFFF", "FFFF", "FFFG"],
+    "5x5": [
+        "SFFFF",
+        "FFFFF",
+        "FFFFF",
+        "FFFFF",
+        "FFFFG"
+    ],
+    "6x6": [
+        "SFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFG"
+    ],
+    "7x7": [
+        "SFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFG"
+    ],
     "5x5_wall": [
         "SFFFF",
         "FFFFF",
@@ -32,12 +57,12 @@ MAPS = {
     "8x8": [
         "SFFFFFFF",
         "FFFFFFFF",
-        "FFFHFFFF",
-        "FFFFFHFF",
-        "FFFHFFFF",
-        "FHHFFFHF",
-        "FHFFHFHF",
-        "FFFHFFFG",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFG",
     ],
     "7x7_1": [
         "SFFFFFF",
