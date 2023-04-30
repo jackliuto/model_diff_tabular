@@ -81,7 +81,7 @@ MAPS = {
         "FFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
-        "FFFFFGF",
+        "GFFFFFF",
 
     ],
 

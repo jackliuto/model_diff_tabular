@@ -10,17 +10,37 @@ from utils import plot_matrix
 
 from pprint import pprint
 
-from Models import DPAgent
+from Models import DPAgent, RTDPAgent
 
 
-env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7")
-
-DPAgent_1 = DPAgent(env1, gamma=0.9, theta=1e-8)
-
-policy1, V1 = DPAgent_1.value_iteration()
 
 
-plot_matrix(V1.reshape(env1.nrow,env1.ncol))
+
+
+env1 = FrozenLakeEnv(is_slippery=False, map_name="7x7_1", terminal_states="H")
+env2 = FrozenLakeEnv(is_slippery=False, map_name="7x7_2", terminal_states="H")
+
+DPAgent_1 = DPAgent(env1, gamma=1, theta=1e-8)
+DPAgent_2 = DPAgent(env2, gamma=1, theta=1e-8)
+
+policy1, V1 = DPAgent_1.value_iteration(steps=20)
+policy2, V2 = DPAgent_2.value_iteration(steps=20)
+
+V1_pi_1 = V1
+V2_pi_2 = V2
+V1_pi_2 = DPAgent_1.policy_evaluation(policy2, steps=20)
+V2_pi_1 = DPAgent_2.policy_evaluation(policy1, steps=20)
+
+Vdiff = V2_pi_2 - V1_pi_1 
+Vdiff_lower = V2_pi_1 - V1_pi_1
+Vdiff_upper = V2_pi_2 - V1_pi_2
+Vdiff_gp = Vdiff_upper - Vdiff_lower
+
+RTDPAgent_1 = RTDPAgent(env1)
+
+RTDPAgent_1.run_eps(max_step = 1000, num_eps=100)
+
+plot_matrix(RTDPAgent_1.V.reshape(env1.nrow,env1.ncol))
 
 
 
