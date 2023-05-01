@@ -226,7 +226,7 @@ class FrozenLakeEnv(Env):
         map_name="4x4",
         is_slippery=True,
         goal_reward = 1,
-        step_cost = 0,
+        step_cost = -1,
         terminal_states = "GH",
         
     ):
