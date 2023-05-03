@@ -20,7 +20,8 @@ def plot_matrix(
     img_width: int = 5, 
     img_height: int = 5, 
     title: str = None,
-    annotate_goal: bool = True
+    annotate_goal: bool = True,
+    save_path: '' = str,
     ) -> None: 
     """
     Plots a matrix as an image.
@@ -53,9 +54,10 @@ def plot_matrix(
     ax.vlines(x=np.arange(width+1) - offset, ymin=-offset, ymax=height-offset)
 
     plt.title(title)
-    plt.show()
+    plt.savefig(save_path, bbox_inches = 'tight')
+    
 
-def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: int = 5, img_height: int = 5, title: str = None) -> None: 
+def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: int = 5, img_height: int = 5, title: str = None, save_path: '' = str) -> None: 
     """ 
     Plots the policy matrix out of the dictionary provided; The dictionary values are used to draw the arrows 
     """
@@ -81,8 +83,8 @@ def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: i
                     plt.arrow(matplot_x, matplot_y, -0.3, 0, head_width = 0.05, head_length = 0.05)
                 if P[S[x, y]][2] > 0: # right
                     plt.arrow(matplot_x, matplot_y, 0.3, 0, head_width = 0.05, head_length = 0.05)
-                if P[S[x, y]][4] > 0: # right
-                    ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
+                # if P[S[x, y]][4] > 0: # stay
+                #     ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
 
 
     offset = .5    
@@ -94,7 +96,7 @@ def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: i
 
     plt.title(title)
 
-    plt.show()
+    plt.savefig(save_path, bbox_inches = 'tight')
 
 
 # def policy_evaluation(env, policy, gamma=1, theta=1e-8):
