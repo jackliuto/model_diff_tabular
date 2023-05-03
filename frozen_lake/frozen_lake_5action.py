@@ -20,7 +20,7 @@ UP = 3
 NOTHING = 4
 
 MAPS = {
-    "2x2": ["SF", "FG"],
+    "2x2": ["SF", "GF"],
     "3x3": ["SFF", "FFF", "FFG"],
     "4x4": ["SFFF", "FFFF", "FFFF", "FFFG"],
     "5x5": [
@@ -64,7 +64,7 @@ MAPS = {
         "FFFFFFFF",
         "FFFFFFFG",
     ],
-    "7x7_1": [
+    "7x7_S00G77": [
         "SFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
@@ -74,16 +74,53 @@ MAPS = {
         "FFFFFFG",
 
     ],
-    "7x7_2": [
+
+    "7x7_S00G76": [
         "SFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
         "FFFFFFF",
-        "GFFFFFF",
+        "FFFFFGF",
 
     ],
+
+    "7x7_S00G73": [
+        "SFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFGFFF",
+
+    ],
+
+
+    "7x7_S00G66": [
+        "SFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFGF",
+        "FFFFFFF",
+
+    ],
+
+        "7x7_S77G00": [
+        "GFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFS",
+
+    ],
+
+
 
     "20x20_1": [
         "SFFFFFFFFFFFFFFFFFFF",
@@ -285,8 +322,10 @@ class FrozenLakeEnv(Env):
         def update_probability_matrix(row, col, action):
             newrow, newcol = inc(row, col, action)
             newstate = to_s(newrow, newcol)
+            # change reward to current state get reward,but not new state get reward
             newletter = desc[newrow, newcol]
-            terminated = bytes(newletter) in b"GH"
+            # newletter = desc[row, col]
+            terminated = bytes(newletter) in str.encode(self.terminal_states)
             if newletter == b"G":
                 reward = self.goal_reward
             elif newletter == b"W":

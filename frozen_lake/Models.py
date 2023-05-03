@@ -1,4 +1,5 @@
 from collections import defaultdict
+import random
 import numpy as np
 import copy
 
@@ -9,6 +10,7 @@ class DPAgent:
         self.env = env
         self.gamma = gamma
         self.theta = theta
+        self.S = np.arange(0, self.env.nS).reshape(self.env.nrow, self.env.ncol)
 
     def policy_evaluation(self, policy, gamma=None, steps=-1) :
         if gamma == None:
@@ -40,7 +42,7 @@ class DPAgent:
                 q[a] += prob * (reward + self.gamma * V[next_state])
         return q
 
-    def policy_improvement(self, V, deterministic=False):
+    def policy_improvement(self, V, det_policy=False):
         policy = np.zeros([self.env.nS, self.env.nA]) / self.env.nA
         for s in range(self.env.nS):
             q = self.q_from_v(V, s)
@@ -52,7 +54,7 @@ class DPAgent:
             # best_a = np.argwhere(q==np.max(q)).flatten()
             # policy[s] = np.sum([np.eye(self.env.nA)[i] for i in best_a], axis=0)/len(best_a)
             
-            if deterministic:
+            if det_policy:
                 policy[s][np.argmax(q)] = 1
             else:
                 best_a = np.argwhere(q==np.max(q)).flatten()
@@ -64,8 +66,12 @@ class DPAgent:
 
         return policy
 
-    def policy_iteration(self):
-        policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
+    def policy_iteration(self, init_P = []):
+        if init_P == []:
+            policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
+        else:
+            policy = init_P
+        n = 0
         while True:
             V = self.policy_evaluation(policy)
             new_policy = self.policy_improvement(V)
@@ -79,27 +85,41 @@ class DPAgent:
             #    break;
             
             policy = copy.copy(new_policy)
+            n += 1
         return policy, V
 
-    def value_iteration(self, steps=-1, det_policy = False):
-        V = np.zeros(self.env.nS)
-        if steps > -1:
-            iterations = 0
+    def value_iteration(self, rank_V = [], init_V = [], max_steps=np.inf, det_policy = False):
+        if init_V == []:
+            V = np.zeros(self.env.nS)
         else:
-            iterations = -2
-        while True and iterations < steps:
+            V = init_V
+        if rank_V == []:
+            s_idx_lst = range(self.env.nS)
+        else:
+            s_idx_lst = np.argsort(rank_V)[::-1]
+        steps = 0
+        break_loop = False
+        while True:
             delta = 0
-            for s in range(self.env.nS):
+            for s in s_idx_lst:
                 v = V[s]
                 V[s] = max(self.q_from_v(V, s))
                 delta = max(delta,abs(V[s]-v))
-            if delta < self.theta:
+                steps += 1
+                if steps >= max_steps:
+                    break_loop = True
+                    break
+                
+            if delta < self.theta or break_loop:
                 break
-            if steps > -1:
-                iterations += 1
+
+            
+
+            
         policy = self.policy_improvement(V, det_policy)
+        return policy, V, steps
+
         
-        return policy, V
 
 class RTDPAgent:
     def __init__(self, env, gamma=0.9, epsilon=0.1, theta=1e-8):
@@ -110,6 +130,7 @@ class RTDPAgent:
         self.V = np.zeros([self.env.nS])
         self.Policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
         self.Vdiff = None
+        self.S = np.arange(0, self.env.nS).reshape(self.env.nrow, self.env.ncol)
     
     def set_policy(self, policy):
         self.Policy = policy.copy()
@@ -121,10 +142,28 @@ class RTDPAgent:
                 q[a] += prob * (reward + self.gamma * self.V[next_state])
         return q
 
-    def choose_action(self, s):
+    def choose_action(self, s, Vdiff):
         action_dist = self.Policy[s]
         if np.random.random() < self.epsilon:
-            a = self.env.action_space.sample()
+            if Vdiff == []:
+                a = self.env.action_space.sample()
+            else:
+                if np.random.random() < 0.25:
+                    a = self.env.action_space.sample()
+                else:
+                    q = []
+                    for a in range(self.env.nA):
+                        for prob, next_state, reward, done in self.env.P[s][a]:
+                            q.append(Vdiff[next_state]+0.01) #take account zero divison
+                    a = random.choice(np.argwhere(q==np.max(q)).flatten())
+                   
+                # action_dist = []
+                # for a in range(self.env.nA):
+                #     for prob, next_state, reward, done in self.env.P[s][a]:
+                #         action_dist.append(Vdiff[next_state]+0.01) #take account zero divison
+                # action_dist = action_dist/np.sum(action_dist)
+                # a = categorical_sample(action_dist, self.env.np_random)
+                # print(action_dist)    
         else:
             a = categorical_sample(action_dist, self.env.np_random)
         return a
@@ -137,8 +176,10 @@ class RTDPAgent:
         best_a = np.argwhere(q==np.max(q)).flatten()
         self.Policy[s] = np.sum([np.eye(self.env.nA)[i] for i in best_a], axis=0)/len(best_a)
 
-    def run_eps(self, max_step = 1000, num_eps=10):
-        
+    def run_eps(self, Vdiff=[], max_step = 1000, num_eps=10):
+        if Vdiff == []:
+            Vdiff = np.ones(self.env.nS)
+
         total_steps = 0
         total_rewards = 0 
         for i in range(num_eps):
@@ -146,7 +187,7 @@ class RTDPAgent:
             counter = 0
             t = False
             while not t and counter < max_step:
-                a = self.choose_action(beg_s)
+                a = self.choose_action(beg_s, Vdiff)
                 end_s, r, t, _, _ = self.env.step(a)
                 self.update_value(beg_s, end_s, r)
                 self.update_policy(beg_s)
@@ -164,10 +205,11 @@ class QLearningAgent:
         self.alpha = alpha
         self.epsilon = epsilon
         self.theta = theta
-        # self.V = np.zeros([self.env.nS])
+        self.V = np.zeros([self.env.nS])
         self.Q = np.zeros([self.env.nS, self.env.nA])
         self.Policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
         self.Vdiff = None
+        self.S = np.arange(0, self.env.nS).reshape(self.env.nrow, self.env.ncol)
     
     def set_policy(self, policy):
         self.Policy = policy.copy()
@@ -179,16 +221,34 @@ class QLearningAgent:
     #             q[a] += prob * (reward + self.gamma * self.V[next_state])
     #     return q
 
-    def choose_action(self, s):
+    def choose_action(self, s, Vdiff):
         action_dist = self.Policy[s]
         if np.random.random() < self.epsilon:
-            a = self.env.action_space.sample()
+            if Vdiff == []:
+                a = self.env.action_space.sample()
+            else:
+                if np.random.random() < 0.25:
+                    a = self.env.action_space.sample()
+                else:
+                    q = []
+                    for a in range(self.env.nA):
+                        for prob, next_state, reward, done in self.env.P[s][a]:
+                            q.append(Vdiff[next_state]+0.01) #take account zero divison
+                    a = random.choice(np.argwhere(q==np.max(q)).flatten())
+                   
+                # action_dist = []
+                # for a in range(self.env.nA):
+                #     for prob, next_state, reward, done in self.env.P[s][a]:
+                #         action_dist.append(Vdiff[next_state]+0.01) #take account zero divison
+                # action_dist = action_dist/np.sum(action_dist)
+                # a = categorical_sample(action_dist, self.env.np_random)
+                # print(action_dist)    
         else:
             a = categorical_sample(action_dist, self.env.np_random)
         return a
     
-    # def update_value(self, beg_s, end_s, r):
-    #     self.V[beg_s] = max(self.V[beg_s], r + self.gamma*self.V[end_s])
+    def update_value(self, beg_s, end_s, r):
+        self.V[beg_s] = max(self.V[beg_s], r + self.gamma*self.V[end_s])
 
     def update_q(self, beg_s, end_s, a, r):
         self.Q[beg_s][a] += self.alpha * (r + self.gamma * np.max(self.Q[end_s]) - self.Q[beg_s][a])
@@ -198,8 +258,9 @@ class QLearningAgent:
         best_a = np.argwhere(q==np.max(q)).flatten()
         self.Policy[s] = np.sum([np.eye(self.env.nA)[i] for i in best_a], axis=0)/len(best_a)
 
-    def run_eps(self, max_step = 1000, num_eps=10):
-        
+    def run_eps(self, Vdiff=[], max_step = 1000, num_eps=10):
+        if Vdiff == []:
+            Vdiff = np.ones(self.env.nS)
         total_steps = 0
         total_rewards = 0 
         for i in range(num_eps):
@@ -207,9 +268,9 @@ class QLearningAgent:
             counter = 0
             t = False
             while not t and counter < max_step:
-                a = self.choose_action(beg_s)
+                a = self.choose_action(beg_s, Vdiff)
                 end_s, r, t, _, _ = self.env.step(a)
-                # self.update_value(beg_s, end_s, r)
+                self.update_value(beg_s, end_s, r)
                 self.update_q(beg_s, end_s, a, r)
                 self.update_policy(beg_s)
                 beg_s = end_s
