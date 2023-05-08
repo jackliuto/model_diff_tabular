@@ -31,6 +31,9 @@ def plot_matrix(
 
     fig = plt.figure(figsize=(img_width, img_width))
     ax = fig.add_subplot(111, aspect='equal')
+
+    max_v = np.max(M)
+    min_v = np.min(M)
     
     for y in range(height):
         for x in range(width):
@@ -43,18 +46,24 @@ def plot_matrix(
                 ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='gray'))
                 if annotate_goal:
                     ax.annotate(str(round(M[x][y],2)), xy=(matplot_x, matplot_y), ha='center', va='center')
-            else: 
+            else:
+                if M[x][y] >= 0:
+                    ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='green', alpha=max(0.0, M[x][y]/max_v))) 
+                else:
+                    ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='red', alpha=max(0.0, M[x][y]/min_v))) 
                 ax.annotate(str(round(M[x][y],2)), xy=(matplot_x, matplot_y), ha='center', va='center')
 
     offset = .5    
     ax.set_xlim(-offset, width - offset)
     ax.set_ylim(-offset, height - offset)
 
-    ax.hlines(y=np.arange(height+1)- offset, xmin=-offset, xmax=width-offset)
-    ax.vlines(x=np.arange(width+1) - offset, ymin=-offset, ymax=height-offset)
+    ax.hlines(y=np.arange(height+1)- offset, colors='black', xmin=-offset, xmax=width-offset)
+    ax.vlines(x=np.arange(width+1) - offset, colors='black', ymin=-offset, ymax=height-offset)
 
     plt.title(title)
-    plt.savefig(save_path, bbox_inches = 'tight')
+
+    plt.show()
+    # plt.savefig(save_path, bbox_inches = 'tight')
     
 
 def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: int = 5, img_height: int = 5, title: str = None, save_path: '' = str) -> None: 
@@ -91,8 +100,8 @@ def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: i
     ax.set_xlim(-offset, width - offset)
     ax.set_ylim(-offset, height - offset)
 
-    ax.hlines(y=np.arange(height+1)- offset, xmin=-offset, xmax=width-offset)
-    ax.vlines(x=np.arange(width+1) - offset, ymin=-offset, ymax=height-offset)
+    ax.hlines(y=np.arange(height+1)- offset, colors='black', xmin=-offset, xmax=width-offset)
+    ax.vlines(x=np.arange(width+1) - offset, colors='black', ymin=-offset, ymax=height-offset)
 
     plt.title(title)
 

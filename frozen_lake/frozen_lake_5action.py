@@ -122,7 +122,30 @@ MAPS = {
 
 
 
-    "20x20_1": [
+    "20x20_S00G1919": [
+        "SFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFG",
+    ],
+
+    "20x20_S00G1515": [
         "SFFFFFFFFFFFFFFFFFFF",
         "FFFFFFFFFFFFFFFFFFFF",
         "FFFFFFFFFFFFFFFFFFFF",
@@ -371,6 +394,11 @@ class FrozenLakeEnv(Env):
         self.elf_images = None
         self.goal_img = None
         self.start_img = None
+    
+    def set_random_start(self, V=[]):
+        if V == []:
+            print(1)
+
 
     def step(self, a):
         transitions = self.P[self.s][a]

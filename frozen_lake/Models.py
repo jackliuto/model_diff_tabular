@@ -5,6 +5,7 @@ import copy
 
 from gym.envs.toy_text.utils import categorical_sample
 
+
 class DPAgent:
     def __init__(self, env, gamma=1, theta=1e-8):
         self.env = env
@@ -71,7 +72,7 @@ class DPAgent:
             policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
         else:
             policy = init_P
-        n = 0
+        steps = 0
         while True:
             V = self.policy_evaluation(policy)
             new_policy = self.policy_improvement(V)
@@ -85,8 +86,8 @@ class DPAgent:
             #    break;
             
             policy = copy.copy(new_policy)
-            n += 1
-        return policy, V
+            steps += 1
+        return policy, V, steps
 
     def value_iteration(self, rank_V = [], init_V = [], max_steps=np.inf, det_policy = False):
         if init_V == []:
@@ -94,7 +95,8 @@ class DPAgent:
         else:
             V = init_V
         if rank_V == []:
-            s_idx_lst = range(self.env.nS)
+            s_idx_lst = list(range(self.env.nS))
+            random.shuffle(s_idx_lst)
         else:
             s_idx_lst = np.argsort(rank_V)[::-1]
         steps = 0
