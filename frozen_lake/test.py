@@ -3,12 +3,67 @@ import numpy as np
 import copy
 
 from frozen_lake_5action import FrozenLakeEnv
-from utils import plot_matrix, plot_policy_matrix
+from utils import plot_matrix, plot_policy_matrix, plot_line_dict
 from pprint import pprint
 from Models import DPAgent, RTDPAgent, QLearningAgent
 
+np.random.seed(0)
 
-# env1_G = FrozenLakeEnv(is_slippery=False, map_name="20x20_1", terminal_states="GH")
+
+def run_VI_exp(DPAgent,V_p1, Vdiff,  Vdiff_gap, Vdiff_upper, Vdiff_lower):
+    _, _, steps_converge = DPAgent.value_iteration()
+    _, _, steps_V_p1 = DPAgent.value_iteration(rank_V=V_p1)
+    _, _, steps_Vdiff = DPAgent.value_iteration(rank_V=Vdiff)
+    _, _, steps_Vdiff_gap = DPAgent.value_iteration(rank_V=Vdiff_gap)
+    _, _, steps_Vdiff_upper = DPAgent.value_iteration(rank_V=Vdiff_upper)
+    _, _, steps_Vdiff_lower = DPAgent.value_iteration(rank_V=Vdiff_lower)
+    print("Random: {}, Cold Start: {}, Diff: {}, Gap: {}, Upper: {}, Lower: {}".format(steps_converge, \
+        steps_V_p1, steps_Vdiff, steps_Vdiff_gap, steps_Vdiff_upper, steps_Vdiff_lower))
+
+
+def run_RTDP_exp(env, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs = 100, V_heur = [], init_policy=[]):
+    total_steps = []
+    for i in range(num_runs):
+        agent = RTDPAgent(env, gamma, epsilon)
+        if init_policy != []:
+            agent.Policy = init_policy.copy()
+        num_steps = agent.run_eps(V_heur, max_step, num_eps)
+        total_steps.append(num_steps)
+    avg_steps = np.average(total_steps, axis=0)
+    return avg_steps
+
+def run_QL_exp(env, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs = 100, V_heur = [], init_policy=[]):
+    total_steps = []
+    for i in range(num_runs):
+        agent = QLearningAgent(env, gamma, epsilon)
+        if init_policy != []:
+            agent.Policy = init_policy.copy()
+        num_steps = agent.run_eps(V_heur, max_step, num_eps)
+        total_steps.append(num_steps)
+    avg_steps = np.average(total_steps, axis=0)
+    return avg_steps
+
+
+
+# total_steps=0,
+# total_rewards=0,
+# for i in range(10):
+#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
+#     total_steps, total_rewards = RTDPAgent_2.run_eps([], max_step = 50, num_eps = 100)
+#     total_steps += total_steps
+#     total_rewards += total_rewards
+# print("Avg Random: {}".format(total_rewards/total_steps))
+
+# ## RTDP Methods
+# total_steps=0,
+# total_rewards=0,
+# for i in range(10):
+#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
+#     total_steps, total_rewards = RTDPAgent_2.run_eps([], max_step = 50, num_eps = 100)
+#     total_steps += total_steps
+#     total_rewards += total_rewards
+# print("Avg Random: {}".format(total_rewards/total_steps))
+
 env1_G = FrozenLakeEnv(is_slippery=False, map_name="7x7_S00G77", terminal_states="GH")
 env2_G = FrozenLakeEnv(is_slippery=False, map_name="7x7_S00G73", terminal_states="GH")
 env3_G = FrozenLakeEnv(is_slippery=False, map_name="7x7_S00G66", terminal_states="GH")
@@ -60,405 +115,121 @@ Vdiff14_lower = V4_pi_1 - V1_pi_1
 Vdiff14_upper = V4_pi_4 - V1_pi_4
 Vdiff14_gap = Vdiff14_upper - Vdiff14_lower
 
-# # VI Methods
-# _, _, steps2_converge = DPAgent_2_converge.value_iteration()
-# _, _, steps2_CS1 = DPAgent_2_converge.value_iteration(init_V=V1_converge)
-# _, _, steps2_Vdiffgap = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_gap)
-# _, _, steps2_Vdiffupper = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_upper)
-# _, _, steps2_Vdifflower = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_lower)
-# _, _, steps2_Vdiffgap_CS1 = DPAgent_2_converge.value_iteration(init_V=V1_converge, rank_V=Vdiff12_gap)
-
-# print("Random: {}, Cold Start: {}, Gap: {}, Upper: {}, Lower: {}, CS+GAP: {}".format(steps2_converge, \
-# steps2_CS1, steps2_Vdiffgap, steps2_Vdiffupper, steps2_Vdifflower, steps2_Vdiffgap_CS1))
-
-# # VI Methods
-# _, _, steps3_converge = DPAgent_3_converge.value_iteration()
-# _, _, steps3_CS1 = DPAgent_3_converge.value_iteration(init_V=V1_converge)
-# _, _, steps3_Vdiffgap = DPAgent_3_converge.value_iteration(rank_V=Vdiff13_gap)
-# _, _, steps3_Vdiffupper = DPAgent_3_converge.value_iteration(rank_V=Vdiff13_upper)
-# _, _, steps3_Vdifflower = DPAgent_3_converge.value_iteration(rank_V=Vdiff13_lower)
-# _, _, steps3_Vdiffgap_CS1 = DPAgent_3_converge.value_iteration(init_V=V1_converge, rank_V=Vdiff13_gap)
-
-# print("Random: {}, Cold Start: {}, Gap: {}, Upper: {}, Lower: {}, CS+GAP: {}".format(steps3_converge, \
-# steps3_CS1, steps3_Vdiffgap, steps3_Vdiffupper, steps3_Vdifflower, steps3_Vdiffgap_CS1))
-
-# # VI Methods
-# _, _, steps4_converge = DPAgent_4_converge.value_iteration()
-# _, _, steps4_CS1 = DPAgent_4_converge.value_iteration(init_V=V1_converge)
-# _, _, steps4_Vdiffgap = DPAgent_4_converge.value_iteration(rank_V=Vdiff14_gap)
-# _, _, steps4_Vdiffupper = DPAgent_4_converge.value_iteration(rank_V=Vdiff14_upper)
-# _, _, steps4_Vdifflower = DPAgent_4_converge.value_iteration(rank_V=Vdiff14_lower)
-# _, _, steps4_Vdiffgap_CS1 = DPAgent_4_converge.value_iteration(init_V=V1_converge, rank_V=Vdiff14_gap)
-
-# print("Random: {}, Cold Start: {}, Gap: {}, Upper: {}, Lower: {}, CS+GAP: {}".format(steps4_converge, \
-# steps4_CS1, steps4_Vdiffgap, steps4_Vdiffupper, steps4_Vdifflower, steps4_Vdiffgap_CS1))
-
-# PI Methods
-_, _, steps5_converge = DPAgent_5_converge.policy_iteration(init_P=[])
-
-print(steps5_converge)
-# _, _, steps2_CS1 = DPAgent_2_converge.value_iteration(init_V=V1_converge)
-# _, _, steps2_Vdiffgap = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_gap)
-# _, _, steps2_Vdiffupper = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_upper)
-# _, _, steps2_Vdifflower = DPAgent_2_converge.value_iteration(rank_V=Vdiff12_lower)
-# _, _, steps2_Vdiffgap_CS1 = DPAgent_2_converge.value_iteration(init_V=V1_converge, rank_V=Vdiff12_gap)
-
-# print("Random: {}, Cold Start: {}, Gap: {}, Upper: {}, Lower: {}, CS+GAP: {}".format(steps2_converge, \
-# steps2_CS1, steps2_Vdiffgap, steps2_Vdiffupper, steps2_Vdifflower, steps2_Vdiffgap_CS1))
+# # # VI Methods
+run_VI_exp(DPAgent_2_converge,V1_converge, Vdiff12_gap, Vdiff12, Vdiff12_upper, Vdiff12_lower)
+run_VI_exp(DPAgent_3_converge,V1_converge, Vdiff13_gap, Vdiff13, Vdiff13_upper, Vdiff13_lower)
+run_VI_exp(DPAgent_4_converge,V1_converge, Vdiff14_gap, Vdiff14, Vdiff14_upper, Vdiff14_lower)
 
 
-
-# ## RTDP Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_2.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_2.run_eps(Vdiff12_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_2.run_eps(Vdiff12_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_2.run_eps(Vdiff12_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_2.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_2.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_2 = RTDPAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_2.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_2.run_eps(Vdiff12_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
-
-# ## RTDP Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_3.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_3.run_eps(Vdiff13_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_3.run_eps(Vdiff13_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_3.run_eps(Vdiff13_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_3.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_3.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_3 = RTDPAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_3.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_3.run_eps(Vdiff13_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
-
-# ## RTDP Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_4.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_4.run_eps(Vdiff14_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_4.run_eps(Vdiff14_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = RTDPAgent_4.run_eps(Vdiff14_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_4.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_4.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     RTDPAgent_4 = RTDPAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     RTDPAgent_4.Policy = policy1_converge 
-#     total_steps, total_rewards = RTDPAgent_4.run_eps(Vdiff14_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
+# # PI Methods
 
 
+# # ## RTDP Methods
 
-# ## QL Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_2.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
+# eps_steps_V2 = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V2_ws = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V2_ws_vdiff = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12, init_policy=policy1_converge)
+# eps_steps_V2_ws_vgap = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_gap, init_policy=policy1_converge)
+# eps_steps_V2_ws_vupper = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_upper, init_policy=policy1_converge)
+# eps_steps_V2_ws_vlower = run_RTDP_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_lower, init_policy=policy1_converge)
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_2.run_eps(Vdiff12_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
+# RTDP_V2_eps_dict = {}
+# RTDP_V2_eps_dict['E-Greedy'] = eps_steps_V2
+# RTDP_V2_eps_dict['E-Greedy + Warm Start'] = eps_steps_V2_ws
+# RTDP_V2_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V2_ws_vdiff
+# RTDP_V2_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V2_ws_vgap
+# RTDP_V2_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V2_ws_vupper
+# RTDP_V2_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V2_ws_vlower
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_2.run_eps(Vdiff12_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
+# plot_line_dict(RTDP_V2_eps_dict, './imgs/RTDP_V2_avg_eps', 'RTDP_V2')
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_2.run_eps(Vdiff12_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
+# eps_steps_V3 = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V3_ws = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V3_ws_vdiff = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13, init_policy=policy1_converge)
+# eps_steps_V3_ws_vgap = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_gap, init_policy=policy1_converge)
+# eps_steps_V3_ws_vupper = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_upper, init_policy=policy1_converge)
+# eps_steps_V3_ws_vlower = run_RTDP_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_lower, init_policy=policy1_converge)
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_2.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_2.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
+# RTDP_V3_eps_dict = {}
+# RTDP_V3_eps_dict['E-Greedy'] = eps_steps_V3
+# RTDP_V3_eps_dict['E-Greedy + Warm Start'] = eps_steps_V3_ws
+# RTDP_V3_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V3_ws_vdiff
+# RTDP_V3_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V3_ws_vgap
+# RTDP_V3_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V3_ws_vupper
+# RTDP_V3_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V3_ws_vlower
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env2_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_2.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_2.run_eps(Vdiff12_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
+# plot_line_dict(RTDP_V3_eps_dict, './imgs/RTDP_V3_avg_eps', 'RTDP_V3')
 
+# eps_steps_V4 = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V4_ws = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V4_ws_vdiff = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14, init_policy=policy1_converge)
+# eps_steps_V4_ws_vgap = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_gap, init_policy=policy1_converge)
+# eps_steps_V4_ws_vupper = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_upper, init_policy=policy1_converge)
+# eps_steps_V4_ws_vlower = run_RTDP_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_lower, init_policy=policy1_converge)
 
-# ## QL Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_3 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_3.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
+# RTDP_V4_eps_dict = {}
+# RTDP_V4_eps_dict['E-Greedy'] = eps_steps_V4
+# RTDP_V4_eps_dict['E-Greedy + Warm Start'] = eps_steps_V4_ws
+# RTDP_V4_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V4_ws_vdiff
+# RTDP_V4_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V4_ws_vgap
+# RTDP_V4_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V4_ws_vupper
+# RTDP_V4_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V4_ws_vlower
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_3 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_3.run_eps(Vdiff13_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
+# plot_line_dict(RTDP_V4_eps_dict, './imgs/RTDP_V4_avg_eps', "RTDP_V4")
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_3.run_eps(Vdiff13_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
+## QL Methods
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_3 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_3.run_eps(Vdiff13_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
+# eps_steps_V2 = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V2_ws = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V2_ws_vdiff = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12, init_policy=policy1_converge)
+# eps_steps_V2_ws_vgap = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_gap, init_policy=policy1_converge)
+# eps_steps_V2_ws_vupper = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_upper, init_policy=policy1_converge)
+# eps_steps_V2_ws_vlower = run_QL_exp(env2_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff12_lower, init_policy=policy1_converge)
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_3 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_3.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_3.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
+# QL_V2_eps_dict = {}
+# QL_V2_eps_dict['E-Greedy'] = eps_steps_V2
+# QL_V2_eps_dict['E-Greedy + Warm Start'] = eps_steps_V2_ws
+# QL_V2_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V2_ws_vdiff
+# QL_V2_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V2_ws_vgap
+# QL_V2_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V2_ws_vupper
+# QL_V2_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V2_ws_vlower
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_3 = QLearningAgent(env3_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_3.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_3.run_eps(Vdiff12_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
+# plot_line_dict(QL_V2_eps_dict, './imgs/QL_V2_avg_eps', 'QL_V2')
 
-# # QL Methods
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_4 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_4.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Random: {}".format(total_rewards/total_steps))
+# eps_steps_V3 = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V3_ws = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V3_ws_vdiff = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13, init_policy=policy1_converge)
+# eps_steps_V3_ws_vgap = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_gap, init_policy=policy1_converge)
+# eps_steps_V3_ws_vupper = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_upper, init_policy=policy1_converge)
+# eps_steps_V3_ws_vlower = run_QL_exp(env3_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff13_lower, init_policy=policy1_converge)
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_4 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_4.run_eps(Vdiff14_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Gap: {}".format(total_rewards/total_steps))
+# QL_V3_eps_dict = {}
+# QL_V3_eps_dict['E-Greedy'] = eps_steps_V3
+# QL_V3_eps_dict['E-Greedy + Warm Start'] = eps_steps_V3_ws
+# QL_V3_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V3_ws_vdiff
+# QL_V3_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V3_ws_vgap
+# QL_V3_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V3_ws_vupper
+# QL_V3_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V3_ws_vlower
 
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_2 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_4.run_eps(Vdiff14_upper, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Upper: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_4 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     total_steps, total_rewards = QLAgent_4.run_eps(Vdiff14_lower, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg Lower: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_4 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_4.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_4.run_eps([], max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS: {}".format(total_rewards/total_steps))
-
-# total_steps=0,
-# total_rewards=0,
-# for i in range(10):
-#     QLAgent_4 = QLearningAgent(env4_G, gamma=0.9, epsilon=0.2)
-#     QLAgent_4.Policy = policy1_converge 
-#     total_steps, total_rewards = QLAgent_4.run_eps(Vdiff14_gap, max_step = 50, num_eps = 100)
-#     total_steps += total_steps
-#     total_rewards += total_rewards
-# print("Avg CS + Gap: {}".format(total_rewards/total_steps))
+# plot_line_dict(QL_V3_eps_dict, './imgs/QL_V3_avg_eps', 'QL_V3')
 
 
+# eps_steps_V4 = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=[])
+# eps_steps_V4_ws = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = [], init_policy=policy1_converge)
+# eps_steps_V4_ws_vdiff = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14, init_policy=policy1_converge)
+# eps_steps_V4_ws_vgap = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_gap, init_policy=policy1_converge)
+# eps_steps_V4_ws_vupper = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_upper, init_policy=policy1_converge)
+# eps_steps_V4_ws_vlower = run_QL_exp(env4_G, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs=100, V_heur = Vdiff14_lower, init_policy=policy1_converge)
 
+# QL_V4_eps_dict = {}
+# QL_V4_eps_dict['E-Greedy'] = eps_steps_V4
+# QL_V4_eps_dict['E-Greedy + Warm Start'] = eps_steps_V4_ws
+# QL_V4_eps_dict['E-Greedy + Warm Start + Vdiff'] = eps_steps_V4_ws_vdiff
+# QL_V4_eps_dict['E-Greedy + Warm Start + Vdiff Gap'] = eps_steps_V4_ws_vgap
+# QL_V4_eps_dict['E-Greedy + Warm Start + Vdiff Upper'] = eps_steps_V4_ws_vupper
+# QL_V4_eps_dict['E-Greedy + Warm Start + Vdiff Lower'] = eps_steps_V4_ws_vlower
 
-
-
-
+# plot_line_dict(QL_V4_eps_dict, './imgs/QL_V4_avg_eps', "QL_V4")
 
 
 

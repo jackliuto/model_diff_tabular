@@ -288,7 +288,7 @@ class FrozenLakeEnv(Env):
         goal_reward = 1,
         step_cost = 0,
         terminal_states = "GH",
-        
+
     ):
         if desc is None and map_name is None:
             desc = generate_random_map()
@@ -394,10 +394,10 @@ class FrozenLakeEnv(Env):
         self.elf_images = None
         self.goal_img = None
         self.start_img = None
-    
-    def set_random_start(self, V=[]):
-        if V == []:
-            print(1)
+
+    # def set_random_start(self, V=[]):
+    #     if V == []:
+    #         print(1)
 
 
     def step(self, a):
