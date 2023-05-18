@@ -17,7 +17,7 @@ LEFT = 0
 DOWN = 1
 RIGHT = 2
 UP = 3
-NOTHING = 4
+# NOTHING = 4
 
 MAPS = {
     "2x2": ["SF", "GF"],
@@ -184,6 +184,7 @@ class GridWorldEnv(Env):
         goal_reward = 1,
         step_cost = 0,
         terminal_states = "GH",
+        slip_prob = 0.2
 
     ):
         if desc is None and map_name is None:
@@ -199,7 +200,7 @@ class GridWorldEnv(Env):
 
         self.terminal_states = terminal_states
 
-        nA = 5
+        nA = 4
         nS = nrow * ncol
 
         self.nA = nA
@@ -234,8 +235,8 @@ class GridWorldEnv(Env):
                 newrow = max(row - 1, 0)
                 if self.desc[newrow, col] != b"W":
                     row = newrow
-            elif a == NOTHING:
-                pass
+            # elif a == NOTHING:
+            #     pass
             return (row, col)
 
         def update_probability_matrix(row, col, action):
@@ -264,10 +265,18 @@ class GridWorldEnv(Env):
                         li.append((1.0, s, 0, True))
                     else:
                         if is_slippery:
-                            for b in [(a - 1) % 4, a, (a + 1) % 4]:
+                            # for b in [(a - 1) % 4, a, (a + 1) % 4]:
+                            for b in [0,1,2,3]:
+                                if b == a:
+                                    ap = 1.0 - slip_prob
+                                else:
+                                    ap = slip_prob/3.0
                                 li.append(
-                                    (1.0 / 3.0, *update_probability_matrix(row, col, b))
+                                    (slip_prob, *update_probability_matrix(row, col, b))
                                 )
+                                # li.append(
+                                #     (1.0 / 3.0, *update_probability_matrix(row, col, b))
+                                # )
                         else:
                             li.append((1.0, *update_probability_matrix(row, col, a)))
 

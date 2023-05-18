@@ -3,7 +3,7 @@ import numpy as np
 import copy
 
 from Gridworld import GridWorldEnv
-from utils import plot_matrix, plot_policy_matrix, plot_line_dict
+from utils import plot_matrix, plot_policy_matrix, plot_line_dict, plot_Qdiff_matrix
 from pprint import pprint
 from Models import DPAgent, RTDPAgent, QLearningAgent
 
@@ -11,12 +11,12 @@ np.random.seed(0)
 
 
 def run_VI_exp(DPAgent,V_p1, Vdiff,  Vdiff_gap, Vdiff_upper, Vdiff_lower):
-    _, _, steps_converge = DPAgent.value_iteration()
-    _, _, steps_V_p1 = DPAgent.value_iteration(rank_V=V_p1)
-    _, _, steps_Vdiff = DPAgent.value_iteration(rank_V=Vdiff)
-    _, _, steps_Vdiff_gap = DPAgent.value_iteration(rank_V=Vdiff_gap)
-    _, _, steps_Vdiff_upper = DPAgent.value_iteration(rank_V=Vdiff_upper)
-    _, _, steps_Vdiff_lower = DPAgent.value_iteration(rank_V=Vdiff_lower)
+    _, _, _, steps_converge = DPAgent.value_iteration()
+    _, _, _, steps_V_p1 = DPAgent.value_iteration(rank_V=V_p1)
+    _, _, _, steps_Vdiff = DPAgent.value_iteration(rank_V=Vdiff)
+    _, _, _, steps_Vdiff_gap = DPAgent.value_iteration(rank_V=Vdiff_gap)
+    _, _, _, steps_Vdiff_upper = DPAgent.value_iteration(rank_V=Vdiff_upper)
+    _, _, _, steps_Vdiff_lower = DPAgent.value_iteration(rank_V=Vdiff_lower)
     print("Random: {}, Cold Start: {}, Diff: {}, Gap: {}, Upper: {}, Lower: {}".format(steps_converge, \
         steps_V_p1, steps_Vdiff, steps_Vdiff_gap, steps_Vdiff_upper, steps_Vdiff_lower))
 
@@ -58,50 +58,70 @@ DPAgent_4_converge = DPAgent(env4_G, gamma=0.9, theta=1e-6)
 DPAgent_5_converge = DPAgent(env5_G, gamma=0.9, theta=1e-6)
 DPAgent_6_converge = DPAgent(env6_G, gamma=0.9, theta=1e-6)
 
-policy1_converge, V1_converge, steps1_converge = DPAgent_1_converge.value_iteration()
-policy2_converge, V2_converge, steps2_converge = DPAgent_2_converge.value_iteration()
-policy3_converge, V3_converge, steps3_converge = DPAgent_3_converge.value_iteration()
-policy4_converge, V4_converge, steps4_converge = DPAgent_4_converge.value_iteration()
-policy5_converge, V5_converge, steps5_converge = DPAgent_5_converge.value_iteration()
-policy6_converge, V6_converge, steps6_converge = DPAgent_6_converge.value_iteration()
+policy1_converge, V1_converge, Q1_converge, steps1_converge = DPAgent_1_converge.value_iteration()
+policy2_converge, V2_converge, Q2_converge, steps2_converge = DPAgent_2_converge.value_iteration()
+policy3_converge, V3_converge, Q3_converge, steps3_converge = DPAgent_3_converge.value_iteration()
+policy4_converge, V4_converge, Q4_converge, steps4_converge = DPAgent_4_converge.value_iteration()
+policy5_converge, V5_converge, Q5_converge, steps5_converge = DPAgent_5_converge.value_iteration()
+policy6_converge, V6_converge, Q6_converge, steps6_converge = DPAgent_6_converge.value_iteration()
 
-V1_pi_1 = V1_converge
-V2_pi_2 = V2_converge
-V1_pi_2 = DPAgent_1_converge.policy_evaluation(policy2_converge)
-V2_pi_1 = DPAgent_2_converge.policy_evaluation(policy1_converge)
+V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
+V2_pi_2, Q2_pi_2 = V2_converge, Q2_converge
+V1_pi_2, Q1_pi_2 = DPAgent_1_converge.policy_evaluation(policy2_converge)
+V2_pi_1, Q2_pi_1 = DPAgent_2_converge.policy_evaluation(policy1_converge)
 
 Vdiff12 = V2_pi_2 - V1_pi_1 
 Vdiff12_lower = V2_pi_1 - V1_pi_1
 Vdiff12_upper = V2_pi_2 - V1_pi_2
 Vdiff12_gap = Vdiff12_upper - Vdiff12_lower
 
-V1_pi_1 = V1_converge
-V3_pi_3 = V3_converge
-V1_pi_3 = DPAgent_1_converge.policy_evaluation(policy3_converge)
-V3_pi_1 = DPAgent_3_converge.policy_evaluation(policy1_converge)
+Qdiff12 = Q2_pi_2 - Q1_pi_1
+Qdiff12_lower = Q2_pi_1 - Q1_pi_1
+Qdiff12_upper = Q2_pi_2 - Q1_pi_2
+Qdiff12_gap = Qdiff12_upper - Qdiff12_lower
+
+V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
+V3_pi_3, Q3_pi_3 = V3_converge, Q3_converge
+V1_pi_3, Q1_pi_3 = DPAgent_1_converge.policy_evaluation(policy3_converge)
+V3_pi_1, Q3_pi_1 = DPAgent_3_converge.policy_evaluation(policy1_converge)
 
 Vdiff13 = V3_pi_3 - V1_pi_1 
 Vdiff13_lower = V3_pi_1 - V1_pi_1
 Vdiff13_upper = V3_pi_3 - V1_pi_3
 Vdiff13_gap = Vdiff13_upper - Vdiff13_lower
 
-V1_pi_1 = V1_converge
-V4_pi_4 = V4_converge
-V1_pi_4 = DPAgent_1_converge.policy_evaluation(policy4_converge)
-V4_pi_1 = DPAgent_4_converge.policy_evaluation(policy1_converge)
+Qdiff13 = Q3_pi_3 - Q1_pi_1 
+Qdiff13_lower = Q3_pi_1 - Q1_pi_1
+Qdiff13_upper = Q3_pi_3 - Q1_pi_3
+Qdiff13_gap = Qdiff13_upper - Qdiff13_lower
+
+V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
+V4_pi_4, Q4_pi_4 = V4_converge, Q4_converge
+V1_pi_4, Q1_pi_4 = DPAgent_1_converge.policy_evaluation(policy4_converge)
+V4_pi_1, Q4_pi_1 = DPAgent_4_converge.policy_evaluation(policy1_converge)
 
 Vdiff14 = V4_pi_4 - V1_pi_1 
 Vdiff14_lower = V4_pi_1 - V1_pi_1
 Vdiff14_upper = V4_pi_4 - V1_pi_4
 Vdiff14_gap = Vdiff14_upper - Vdiff14_lower
 
+Qdiff14 = Q4_pi_4 - Q1_pi_1 
+Qdiff14_lower = Q4_pi_1 - Q1_pi_1
+Qdiff14_upper = Q4_pi_4 - Q1_pi_4
+Qdiff14_gap = Qdiff14_upper - Qdiff14_lower
+
+plot_Qdiff_matrix(Qdiff12, DPAgent_1_converge.S, goal_coords=[(6,3)])
+
+plot_policy_matrix(policy1_converge, DPAgent_1_converge.S, goal_coords=[(6,6)],title='Goal at 77', save_path='./imgs/P_g77')
+
 # # # VI Methods
-run_VI_exp(DPAgent_2_converge,V1_converge, Vdiff12_gap, Vdiff12, Vdiff12_upper, Vdiff12_lower)
-run_VI_exp(DPAgent_3_converge,V1_converge, Vdiff13_gap, Vdiff13, Vdiff13_upper, Vdiff13_lower)
-run_VI_exp(DPAgent_4_converge,V1_converge, Vdiff14_gap, Vdiff14, Vdiff14_upper, Vdiff14_lower)
+# run_VI_exp(DPAgent_2_converge,V1_converge, Vdiff12_gap, Vdiff12, Vdiff12_upper, Vdiff12_lower)
+# run_VI_exp(DPAgent_3_converge,V1_converge, Vdiff13_gap, Vdiff13, Vdiff13_upper, Vdiff13_lower)
+# run_VI_exp(DPAgent_4_converge,V1_converge, Vdiff14_gap, Vdiff14, Vdiff14_upper, Vdiff14_lower)
 
 
 # # PI Methods
+# p, v, s = DPAgent_2_converge.policy_iteration(policy1_converge)
 
 
 # # ## RTDP Methods

@@ -107,6 +107,69 @@ def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: i
 
     plt.savefig(save_path, bbox_inches = 'tight')
 
+def plot_Qdiff_matrix(Q:np.array, S:np.array, goal_coords: list = [], img_width: int = 5, img_height: int = 5, title: str = None, save_path: '' = str) -> None:
+    """
+    Plots the qdiff matrix out of the dictionary provided; The dictionary values are used to draw the arrows
+    """
+    height, width = S.shape
+    # P = np.zeros([])
+
+    # for i in range(len(Q)):
+    #     P
+
+
+    fig = plt.figure(figsize=(img_width, img_width))
+    ax = fig.add_subplot(111, aspect='equal')
+    for y in range(height):
+        for x in range(width):
+            matplot_x, matplot_y = array_index_to_matplot_coords(x, y, height)
+            max_values = [1 if i == np.max(Q[S[x,y]]) else 0 for i in Q[S[x,y]]]
+
+            if (x, y) in goal_coords:
+                ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='gray'))
+            else:
+                if max_values[3] > 0: # up
+                    plt.arrow(matplot_x, matplot_y, 0, 0.3, head_width = 0.05, head_length = 0.05)
+                if max_values[1] > 0: # down
+                    plt.arrow(matplot_x, matplot_y, 0, -0.3, head_width = 0.05, head_length = 0.05)
+                if max_values[0] > 0: # left
+                    plt.arrow(matplot_x, matplot_y, -0.3, 0, head_width = 0.05, head_length = 0.05)
+                if max_values[2] > 0: # right
+                    plt.arrow(matplot_x, matplot_y, 0.3, 0, head_width = 0.05, head_length = 0.05)
+                # if max_values[4] > 0: # stay
+                #     ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
+  
+
+            # # If there is a tuple of (x, y) in the goal_coords list, we color the cell gray
+            # if (x, y) in goal_coords:
+            #     ax.add_patch(matplotlib.patches.Rectangle((matplot_x - 0.5, matplot_y - 0.5), 1, 1, facecolor='gray'))
+            # else:
+            #     # Adding the arrows to the plot
+            #     if P[S[x, y]][3] > 0: # up
+            #         plt.arrow(matplot_x, matplot_y, 0, 0.3, head_width = 0.05, head_length = 0.05)
+            #     if P[S[x, y]][1] > 0: # down
+            #         plt.arrow(matplot_x, matplot_y, 0, -0.3, head_width = 0.05, head_length = 0.05)
+            #     if P[S[x, y]][0] > 0: # left
+            #         plt.arrow(matplot_x, matplot_y, -0.3, 0, head_width = 0.05, head_length = 0.05)
+            #     if P[S[x, y]][2] > 0: # right
+            #         plt.arrow(matplot_x, matplot_y, 0.3, 0, head_width = 0.05, head_length = 0.05)
+            #     if P[S[x, y]][4] > 0: # stay
+            #         ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
+
+
+    offset = .5
+    ax.set_xlim(-offset, width - offset)
+    ax.set_ylim(-offset, height - offset)
+
+    ax.hlines(y=np.arange(height+1)- offset, colors='black', xmin=-offset, xmax=width-offset)
+    ax.vlines(x=np.arange(width+1) - offset, colors='black', ymin=-offset, ymax=height-offset)
+
+    plt.title(title)
+
+    plt.show()
+
+    # plt.savefig(save_path, bbox_inches = 'tight')
+
 def plot_line_dict(line_dict, save_path, title):
     for k, v in line_dict.items():
         plt.plot(v, label=k)
