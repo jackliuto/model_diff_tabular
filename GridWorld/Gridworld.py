@@ -184,7 +184,8 @@ class GridWorldEnv(Env):
         goal_reward = 1,
         step_cost = 0,
         terminal_states = "GH",
-        slip_prob = 0.2
+        slip_prob = 0.2,
+        random_start = False
 
     ):
         if desc is None and map_name is None:
@@ -199,7 +200,7 @@ class GridWorldEnv(Env):
         self.step_cost = step_cost
 
         self.terminal_states = terminal_states
-
+        
         nA = 4
         nS = nrow * ncol
 
@@ -207,8 +208,10 @@ class GridWorldEnv(Env):
         self.nS = nS
 
 
-
-        self.initial_state_distrib = np.array(desc == b"S").astype("float64").ravel()
+        if random_start:
+            self.initial_state_distrib = np.array(desc == b"S").astype("float64").ravel() + np.array(desc == b"F").astype("float64").ravel()
+        else:
+            self.initial_state_distrib = np.array(desc == b"S").astype("float64").ravel()
         self.initial_state_distrib /= self.initial_state_distrib.sum()
 
         self.P = {s: {a: [] for a in range(nA)} for s in range(nS)}

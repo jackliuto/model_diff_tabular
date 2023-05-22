@@ -5,6 +5,8 @@ import copy
 
 from gym.envs.toy_text.utils import categorical_sample
 
+from utils import plot_matrix, plot_policy_matrix, plot_line_dict, plot_Qdiff_matrix
+
 
 class DPAgent:
     def __init__(self, env, gamma=1, theta=1e-8):
@@ -232,41 +234,84 @@ class QLearningAgent:
         self.Vdiff = None
         self.S = np.arange(0, self.env.nS).reshape(self.env.nrow, self.env.ncol)
 
-    def set_policy(self, policy):
-        self.Policy = policy.copy()
+    def softmax_t(self, x, temp):
+        e_x = np.exp((1/temp)*(x)) ## need to be corrected
+        dist = e_x / e_x.sum()
+        return dist
 
-    # def q_from_v(self, s):
-    #     q = np.zeros(self.env.nA)
-    #     for a in range(self.env.nA):
-    #         for prob, next_state, reward, done in self.env.P[s][a]:
-    #             q[a] += prob * (reward + self.gamma * self.V[next_state])
-    #     return q
+    def warm_start_q(self, Q):
+        self.Q = Q.copy()
+        for s in range(len(self.Policy)):
+            self.update_policy(s)
+    
+    # def warm_start_policy(self, P):
+    #     self.Policy = P
 
-    def choose_action(self, s, Vdiff):
+    def q_from_v(self, V, s):
+        q = np.zeros(self.env.nA)
+        for a in range(self.env.nA):
+            for prob, next_state, reward, done in self.env.P[s][a]:
+                q[a] += prob * (reward + self.gamma * V[next_state])
+        return q
+    
+    def choose_action(self, s, V_heur, temp):
+
         action_dist = self.Policy[s]
-        if np.random.random() < self.epsilon:
-            if Vdiff == []:
-                a = self.env.action_space.sample()
-            else:
-                if np.random.random() < 0.5:
-                    a = self.env.action_space.sample()
-                else:
-                    q = []
-                    for a in range(self.env.nA):
-                        for prob, next_state, reward, done in self.env.P[s][a]:
-                            q.append(Vdiff[next_state]+0.01) #take account zero divison
-                    a = random.choice(np.argwhere(q==np.max(q)).flatten())
 
-                # action_dist = []
-                # for a in range(self.env.nA):
-                #     for prob, next_state, reward, done in self.env.P[s][a]:
-                #         action_dist.append(Vdiff[next_state]+0.01) #take account zero divison
-                # action_dist = action_dist/np.sum(action_dist)
-                # a = categorical_sample(action_dist, self.env.np_random)
-                # print(action_dist)
-        else:
-            a = categorical_sample(action_dist, self.env.np_random)
+        q = self.Q[s]
+        if len(V_heur) > 0:
+            q_heur = self.q_from_v(V_heur,s)
+            q = q_heur + q
+
+        
+        
+        softmax_q = self.softmax_t(q, temp)
+
+
+        a = categorical_sample(softmax_q, self.env.np_random)
+
+
+        # if V_heur == []:
+        #     if np.random.random() < self.epsilon:
+        #          a = self.env.action_space.sample()
+        #     else:
+        #         a = categorical_sample(action_dist, self.env.np_random)
+        # else:
+        #     q = []
+        #     for a in range(self.env.nA):
+        #         for prob, next_state, reward, done in self.env.P[s][a]:
+        #             q.append(V_heur[next_state]+0.0001) #take account zero divison
+        #     softmax_q = self.softmax_t(q,t=0.5)
+        #     # print(softmax_q)
+
+        #     a = categorical_sample(softmax_q, self.env.np_random)
         return a
+
+    # def choose_action(self, s, Vdiff, temp):
+    #     action_dist = self.Policy[s]
+    #     if np.random.random() < self.epsilon:
+    #         if Vdiff == []:
+    #             a = self.env.action_space.sample()
+    #         else:
+    #             if np.random.random() < 0.9:
+    #                 a = self.env.action_space.sample()
+    #             else:
+    #                 q = []
+    #                 for a in range(self.env.nA):
+    #                     for prob, next_state, reward, done in self.env.P[s][a]:
+    #                         q.append(Vdiff[next_state]+0.01) #take account zero divison
+    #                 a = random.choice(np.argwhere(q==np.max(q)).flatten())
+
+    #             # action_dist = []
+    #             # for a in range(self.env.nA):
+    #             #     for prob, next_state, reward, done in self.env.P[s][a]:
+    #             #         action_dist.append(Vdiff[next_state]+0.01) #take account zero divison
+    #             # action_dist = action_dist/np.sum(action_dist)
+    #             # a = categorical_sample(action_dist, self.env.np_random)
+    #             # print(action_dist)
+    #     else:
+    #         a = categorical_sample(action_dist, self.env.np_random)
+    #     return a
 
     def update_value(self, beg_s, end_s, r):
         self.V[beg_s] = max(self.V[beg_s], r + self.gamma*self.V[end_s])
@@ -279,22 +324,119 @@ class QLearningAgent:
         best_a = np.argwhere(q==np.max(q)).flatten()
         self.Policy[s] = np.sum([np.eye(self.env.nA)[i] for i in best_a], axis=0)/len(best_a)
 
-    def run_eps(self, V_heur=[], max_step = 1000, num_eps=10):
-        if V_heur == []:
-            V_heur = np.ones(self.env.nS)
+    def run_eps(self, V_heur, temp, max_step, num_eps):
+        # if V_heur == []:
+        #     V_heur = np.ones(self.env.nS)
         num_steps = []
+        dis_reward = []
         for i in range(num_eps):
             beg_s, init_prob = self.env.reset()
             counter = 0
+            dis_r = 0
             t = False
             while not t and counter < max_step:
-                a = self.choose_action(beg_s, V_heur)
+                a = self.choose_action(beg_s, V_heur, temp)
                 end_s, r, t, _, _ = self.env.step(a)
-                self.update_value(beg_s, end_s, r)
+                # self.update_value(beg_s, end_s, r)
                 self.update_q(beg_s, end_s, a, r)
                 self.update_policy(beg_s)
                 beg_s = end_s
                 counter += 1
+                dis_r += self.gamma**counter*r
             num_steps.append(counter)
+            dis_reward.append(dis_r)
 
-        return num_steps
+            # plot_policy_matrix(self.Policy, self.S, goal_coords=[],title=str('i'), save_path='./imgs/'+str(i))
+        return num_steps, dis_reward
+
+
+
+# class EpsAgent:
+#     def __init__(self, env, gamma=0.9, alpha=0.5, epsilon=0.1, theta=1e-8):
+#         self.env = env
+#         self.gamma = gamma
+#         self.alpha = alpha
+#         self.epsilon = epsilon
+#         self.theta = theta
+#         self.V = np.zeros([self.env.nS])
+#         self.Q = np.zeros([self.env.nS, self.env.nA])
+#         self.Policy = np.ones([self.env.nS, self.env.nA]) / self.env.nA
+#         self.V_heur = None
+#         self.S = np.arange(0, self.env.nS).reshape(self.env.nrow, self.env.ncol)
+
+#     def choose_action(self, s, Vdiff):
+#         action_dist = self.Policy[s]
+#         if np.random.random() < self.epsilon:
+#             if Vdiff == []:
+#                 a = self.env.action_space.sample()
+#             else:
+#                 if np.random.random() < 0.5:
+#                     a = self.env.action_space.sample()
+#                 else:
+#                     q = []
+#                     for a in range(self.env.nA):
+#                         for prob, next_state, reward, done in self.env.P[s][a]:
+#                             q.append(Vdiff[next_state]+0.01) #take account zero divison
+#                     a = random.choice(np.argwhere(q==np.max(q)).flatten())
+
+#                 # action_dist = []
+#                 # for a in range(self.env.nA):
+#                 #     for prob, next_state, reward, done in self.env.P[s][a]:
+#                 #         action_dist.append(Vdiff[next_state]+0.01) #take account zero divison
+#                 # action_dist = action_dist/np.sum(action_dist)
+#                 # a = categorical_sample(action_dist, self.env.np_random)
+#                 # print(action_dist)
+#         else:
+#             a = categorical_sample(action_dist, self.env.np_random)
+#         return a
+
+#     def update_value(self, beg_s, end_s, r):
+#         self.V[beg_s] = max(self.V[beg_s], r + self.gamma*self.V[end_s])
+
+#     def update_q_with_ql(self, beg_s, end_s, a, r):
+#         self.Q[beg_s][a] += self.alpha * (r + self.gamma * np.max(self.Q[end_s]) - self.Q[beg_s][a])
+
+#     def update_policy(self, s):
+#         q = self.Q[s]
+#         best_a = np.argwhere(q==np.max(q)).flatten()
+#         self.Policy[s] = np.sum([np.eye(self.env.nA)[i] for i in best_a], axis=0)/len(best_a)
+
+#     def run_ql_eps(self, V_heur=[], max_step = 1000, num_eps=10):
+#         if V_heur == []:
+#             V_heur = np.ones(self.env.nS)
+#         num_steps = []
+#         for i in range(num_eps):
+#             beg_s, init_prob = self.env.reset()
+#             counter = 0
+#             t = False
+#             while not t and counter < max_step:
+#                 a = self.choose_action(beg_s, V_heur)
+#                 end_s, r, t, _, _ = self.env.step(a)
+#                 self.update_value(beg_s, end_s, r)
+#                 self.update_q_ql(beg_s, end_s, a, r)
+#                 self.update_policy(beg_s)
+#                 beg_s = end_s
+#                 counter += 1
+#             num_steps.append(counter)
+
+#         return num_steps
+
+#     def run_RTDP_eps(self, V_heur=[], max_step = 1000, num_eps=10):
+#         if V_heur == []:
+#             V_heur = np.ones(self.env.nS)
+#         num_steps = []
+#         for i in range(num_eps):
+#             beg_s, init_prob = self.env.reset()
+#             counter = 0
+#             t = False
+#             while not t and counter < max_step:
+#                 a = self.choose_action(beg_s, V_heur)
+#                 end_s, r, t, _, _ = self.env.step(a)
+#                 self.update_value(beg_s, end_s, r)
+#                 self.update_q(beg_s, end_s, a, r)
+#                 self.update_policy(beg_s)
+#                 beg_s = end_s
+#                 counter += 1
+#             num_steps.append(counter)
+
+#         return num_steps

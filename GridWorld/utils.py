@@ -92,8 +92,8 @@ def plot_policy_matrix(P: dict, S:np.array, goal_coords: list = [], img_width: i
                     plt.arrow(matplot_x, matplot_y, -0.3, 0, head_width = 0.05, head_length = 0.05)
                 if P[S[x, y]][2] > 0: # right
                     plt.arrow(matplot_x, matplot_y, 0.3, 0, head_width = 0.05, head_length = 0.05)
-                if P[S[x, y]][4] > 0: # stay
-                    ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
+                # if P[S[x, y]][4] > 0: # stay
+                #     ax.add_patch(plt.Circle((matplot_x, matplot_y), 0.1, fill=False))
 
 
     offset = .5
