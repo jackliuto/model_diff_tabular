@@ -17,12 +17,53 @@ LEFT = 0
 DOWN = 1
 RIGHT = 2
 UP = 3
+# NOTHING = 4
 
 MAPS = {
     "2x2": ["SF", "GF"],
     "3x3": ["SFF", "FFF", "FFG"],
     "4x4": ["SFFF", "FFFF", "FFFF", "FFFG"],
-
+    "5x5": [
+        "SFFFF",
+        "FFFFF",
+        "FFFFF",
+        "FFFFF",
+        "FFFFG"
+    ],
+    "6x6": [
+        "SFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFF",
+        "FFFFFG"
+    ],
+    "7x7": [
+        "SFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFG"
+    ],
+    "5x5_wall": [
+        "SFFFF",
+        "FFFFF",
+        "FFFFF",
+        "FFWWW",
+        "FFFFG"
+    ],
+    "8x8": [
+        "SFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFF",
+        "FFFFFFFG",
+    ],
     "7x7_S00G77": [
         "SFFFFFF",
         "FFFFFFF",
@@ -31,6 +72,17 @@ MAPS = {
         "FFFFFFF",
         "FFFFFFF",
         "FFFFFFG",
+
+    ],
+
+    "7x7_S00G76": [
+        "SFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFFF",
+        "FFFFFGF",
 
     ],
 
@@ -43,16 +95,6 @@ MAPS = {
         "FFFFFFF",
         "FFFGFFF",
 
-    ],
-
-    "7x7_S00G7377": [
-        "SFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFFFFF",
-        "FFFGFFG",
     ],
 
 
@@ -78,6 +120,53 @@ MAPS = {
 
     ],
 
+
+
+    "20x20_S00G1919": [
+        "SFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFG",
+    ],
+
+    "20x20_S00G1515": [
+        "SFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFF",
+        "FFFFFFFFFFFFFFFFFFFG",
+    ]
 }
 
 
@@ -96,8 +185,7 @@ class GridWorldEnv(Env):
         step_cost = 0,
         terminal_states = "GH",
         slip_prob = 0.2,
-        random_start = False,
-        reward_matrix = None,
+        random_start = False
 
     ):
         if desc is None and map_name is None:
@@ -106,27 +194,10 @@ class GridWorldEnv(Env):
             desc = MAPS[map_name]
         self.desc = desc = np.asarray(desc, dtype="c")
         self.nrow, self.ncol = nrow, ncol = desc.shape
+        self.reward_range = (0, 1)
 
         self.goal_reward = goal_reward
         self.step_cost = step_cost
-
-        def initialize_reward_matrx(desc):
-            reward_matrix = np.zeros(desc.shape)
-            for i in range(reward_matrix.shape[0]):
-                for j in range(reward_matrix.shape[1]):
-                    letter = desc[i,j]
-                    if letter == b"G":
-                        reward_matrix[i][j] = goal_reward
-                    elif letter == b"W":
-                        reward_matrix[i][j] = 0
-                    else:
-                        reward_matrix[i][j]= step_cost
-            return reward_matrix
-        
-        if type(reward_matrix) == type(None):
-            self.reward_matrix = initialize_reward_matrx(self.desc)
-        else:
-            self.reward_matrix = reward_matrix
 
         self.terminal_states = terminal_states
         
@@ -178,14 +249,13 @@ class GridWorldEnv(Env):
             newletter = desc[newrow, newcol]
             # newletter = desc[row, col]
             terminated = bytes(newletter) in str.encode(self.terminal_states)
-            # if newletter == b"G":
-            #     reward = self.goal_reward
-            # elif newletter == b"W":
-            #     reward = 0
-            # else:
-            #     reward = self.step_cost
-            # # reward = float(newletter == b"G")
-            reward = self.reward_matrix[newrow, newcol]
+            if newletter == b"G":
+                reward = self.goal_reward
+            elif newletter == b"W":
+                reward = 0
+            else:
+                reward = self.step_cost
+            # reward = float(newletter == b"G")
             return newstate, reward, terminated
 
         for row in range(nrow):
@@ -195,8 +265,7 @@ class GridWorldEnv(Env):
                     li = self.P[s][a]
                     letter = desc[row, col]
                     if letter in str.encode(self.terminal_states):
-                        # li.append((1.0, s, 0, True)) ## terminal state have
-                        li.append((1.0, *update_probability_matrix(row, col, a))) 
+                        li.append((1.0, s, 0, True))
                     else:
                         if is_slippery:
                             # for b in [(a - 1) % 4, a, (a + 1) % 4]:
@@ -294,3 +363,5 @@ class GridWorldEnv(Env):
             pygame.quit()
 
 
+# Elf and stool from https://franuka.itch.io/rpg-snow-tileset
+# All other assets by Mel Tillery http://www.cyaneus.com/

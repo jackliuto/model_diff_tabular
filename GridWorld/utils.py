@@ -174,7 +174,7 @@ def plot_line_dict(line_dict, save_path, title):
     for k, v in line_dict.items():
         plt.plot(v, label=k)
     plt.legend()
-    plt.title('{} Num Eps vs Average Eps Length'.format(title))
+    plt.title('{}'.format(title))
     plt.savefig(save_path, bbox_inches = 'tight')
     plt.close()
 

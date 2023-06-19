@@ -5,50 +5,134 @@ import copy
 from Gridworld import GridWorldEnv
 from utils import plot_matrix, plot_policy_matrix, plot_line_dict, plot_Qdiff_matrix
 from pprint import pprint
-from Models import DPAgent, RTDPAgent, QLearningAgent
+from Models import DPAgent, QLearningAgent
 
-np.random.seed(0)
+# np.random.seed(0)
 
-def run_QL_exp(env, gamma=0.9, epsilon=0.2, max_step=100, num_eps = 50, num_runs = 10, temp=0, V_heur = [], init_q = [], init_policy=[]):
-    total_steps = []
+def run_QL_exp_warmstart(env, gamma=0.9, alpha=0.5, epsilon=0.1, max_step=20, num_eps = 50, num_runs = 10, explore='e-greedy', init_Q = []):
     total_dis_r = []
     for i in range(num_runs):
-        agent = QLearningAgent(env, gamma, epsilon)
-        # if len(init_policy) > 0:
-        #     agent.Policy = init_policy.copy()
-        if len(init_q) > 0:
-            agent.warm_start_q(init_q)
-        num_steps, dis_r = agent.run_eps(V_heur=V_heur, temp=temp, max_step=max_step, num_eps=num_eps)
-        total_steps.append(num_steps)
+        agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
+        # if len(init_q) > 0:
+        #     agent.warm_start_q(init_q)
+        dis_r = agent.run_warmstart(init_Q=init_Q, max_step=max_step, num_eps=num_eps, explore=explore)
         total_dis_r.append(dis_r)
-    avg_steps = np.average(total_steps, axis=0)
     avg_dis_r = np.average(total_dis_r, axis=0)
-    return avg_steps, avg_dis_r
+    return avg_dis_r
 
 
 
 RANDOM_START = False
+GAMMA = 0.9
+THETA = 1e-6
 
-env1_G = GridWorldEnv(is_slippery=False, map_name="7x7_S00G77", terminal_states="GH", random_start=RANDOM_START)
-env2_G = GridWorldEnv(is_slippery=False, map_name="7x7_S00G73", terminal_states="GH", random_start=RANDOM_START)
-env3_G = GridWorldEnv(is_slippery=False, map_name="7x7_S00G66", terminal_states="GH", random_start=RANDOM_START)
-env4_G = GridWorldEnv(is_slippery=False, map_name="7x7_S77G00", terminal_states="GH", random_start=RANDOM_START)
-env5_G = GridWorldEnv(is_slippery=False, map_name="20x20_S00G1919", terminal_states="GH", random_start=RANDOM_START)
-env6_G = GridWorldEnv(is_slippery=False, map_name="20x20_S00G1515", terminal_states="GH", random_start=RANDOM_START)
+env_2 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G7377", random_start=RANDOM_START)
+env_1 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G77", random_start=RANDOM_START)
+# env_2 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G73", random_start=RANDOM_START)
+# env_3 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G66", random_start=RANDOM_START)
+# env_4 = GridWorldEnv(is_slippery=False, map_name="7x7_S77G00", random_start=RANDOM_START)
 
-DPAgent_1_converge = DPAgent(env1_G, gamma=0.9, theta=1e-6)
-DPAgent_2_converge = DPAgent(env2_G, gamma=0.9, theta=1e-6)
-DPAgent_3_converge = DPAgent(env3_G, gamma=0.9, theta=1e-6)
-DPAgent_4_converge = DPAgent(env4_G, gamma=0.9, theta=1e-6)
-DPAgent_5_converge = DPAgent(env5_G, gamma=0.9, theta=1e-6)
-DPAgent_6_converge = DPAgent(env6_G, gamma=0.9, theta=1e-6)
+env_diff_21 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G7377", random_start=RANDOM_START, reward_matrix=env_2.reward_matrix-env_1.reward_matrix)
+# env_diff_31 = GridWorldEnv(is_slippery=False, map_name="7x7_S00G66", random_start=RANDOM_START, reward_matrix=env_3.reward_matrix-env_1.reward_matrix)
+# env_diff_41 = GridWorldEnv(is_slippery=False, map_name="7x7_S77G00", random_start=RANDOM_START, reward_matrix=env_4.reward_matrix-env_1.reward_matrix)
 
-policy1_converge, V1_converge, Q1_converge, steps1_converge = DPAgent_1_converge.value_iteration()
-policy2_converge, V2_converge, Q2_converge, steps2_converge = DPAgent_2_converge.value_iteration()
-policy3_converge, V3_converge, Q3_converge, steps3_converge = DPAgent_3_converge.value_iteration()
-policy4_converge, V4_converge, Q4_converge, steps4_converge = DPAgent_4_converge.value_iteration()
-policy5_converge, V5_converge, Q5_converge, steps5_converge = DPAgent_5_converge.value_iteration()
-policy6_converge, V6_converge, Q6_converge, steps6_converge = DPAgent_6_converge.value_iteration()
+DPAgent_1 = DPAgent(env_1, gamma=GAMMA, theta=THETA)
+DPAgent_2 = DPAgent(env_2, gamma=GAMMA, theta=THETA)
+# DPAgent_3 = DPAgent(env_3, gamma=GAMMA, theta=THETA)
+# DPAgent_4 = DPAgent(env_4, gamma=GAMMA, theta=THETA)
+
+DPAgent_diff_21 = DPAgent(env_diff_21, gamma=GAMMA, theta=THETA)
+# DPAgent_diff_31 = DPAgent(env_diff_31, gamma=GAMMA, theta=THETA)
+# DPAgent_diff_41 = DPAgent(env_diff_41, gamma=GAMMA, theta=THETA)
+
+
+policy1_converge, V1_converge, Q1_converge, steps1_converge, iter1_converge = DPAgent_1.value_iteration()
+policy2_converge, V2_converge, Q2_converge, steps2_converge, iter2_converge = DPAgent_2.value_iteration()
+# policy3_converge, V3_converge, Q3_converge, steps3_converge, iter3_converge = DPAgent_3.value_iteration()
+# policy4_converge, V4_converge, Q4_converge, steps4_converge, iter4_converge = DPAgent_4.value_iteration()
+
+Vdiff12_lower, Qdiff12_lower, n = DPAgent_diff_21.policy_evaluation(policy1_converge, max_iter=np.inf)
+
+V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
+V2_pi_2, Q2_pi_2 = V2_converge, Q2_converge
+V1_pi_2_c, Q1_pi_2_c, _ = DPAgent_1.policy_evaluation(policy2_converge)
+V2_pi_1_c, Q2_pi_1_c, _ = DPAgent_2.policy_evaluation(policy1_converge)
+
+
+print(Vdiff12_lower.reshape(7,7))
+V = Vdiff12_lower + V1_pi_1
+print(V.reshape(7,7))
+
+# plot_matrix(env_2, env_1.reward_matrix, goal_coords=[(6,3), (6,6)],title='MPD1', save_path='./imgs/counter_examples/MDP1')
+# plot_matrix(env_2, env_2.reward_matrix, goal_coords=[(6,6)],title='MPD2', save_path='./imgs/counter_examples/MDP2')
+# plot_matrix(env_2, Vdiff12_lower, goal_coords=[(6,6)],title='Vdiff12_lower', save_path='./imgs/counter_examples/vdiff12_lower')
+# plot_matrix(env_2, V, goal_coords=[(6,6)],title='V2_pi1', save_path='./imgs/counter_examples/V2_pi1')
+
+
+
+plot_matrix(env_2, env_1.reward_matrix, goal_coords=[(6,6)],title='MPD1_r', save_path='./imgs/counter_examples/MDP1_r')
+plot_matrix(env_2, env_2.reward_matrix, goal_coords=[(6,3), (6,6)],title='MPD2_r', save_path='./imgs/counter_examples/MDP2_r')
+plot_matrix(env_2, Vdiff12_lower, goal_coords=[(6,6)],title='Vdiff12_lower_r', save_path='./imgs/counter_examples/vdiff12_lower_r')
+plot_matrix(env_2, V, goal_coords=[(6,6)],title='V2_pi1_r', save_path='./imgs/counter_examples/V2_pi1_r')
+
+raise ValueError
+
+GAMMA = 0.9
+ALPHA = 0.5
+EPSILON = 0.1
+TEMP = 0.01
+NUM_RUNS = 10
+NUM_EPS = 50
+MAX_STEP = 20
+QL_V2_eps_dict = {}
+
+Vdiff12_lower_dict = {}
+Qdiff12_lower_dict = {}
+for i in range(0,101,5):
+    Vdiff12_lower, Qdiff12_lower, n = DPAgent_diff_21.policy_evaluation(policy1_converge, max_iter=i)
+    Vdiff12_lower_dict[i] = Vdiff12_lower
+    Qdiff12_lower_dict[i] = Qdiff12_lower
+
+for k,v in Qdiff12_lower_dict.items():
+    Q2_pi_1 = v + Q1_pi_1
+    eps_r_V2 = run_QL_exp_warmstart(env_2, gamma=0.9, alpha=ALPHA, epsilon=EPSILON , max_step=MAX_STEP, num_eps = NUM_EPS, num_runs=NUM_RUNS, init_Q = Q2_pi_1)
+    QL_V2_eps_dict[k] = eps_r_V2
+
+eps_r_V2_optimal = run_QL_exp_warmstart(env_2, gamma=GAMMA, alpha=0, epsilon=0.1 , max_step=MAX_STEP, num_eps = NUM_EPS, num_runs=NUM_RUNS, init_Q = Q2_pi_2)
+QL_V2_eps_dict['optimal'] = eps_r_V2_optimal
+
+
+for k,v in QL_V2_eps_dict.items():
+    print(k, sum(v))
+
+# raise ValueError
+# Q2_pi_1 = Qdiff12_lower_list[0] + Q1_pi_1
+# eps_r_V2 = run_QL_exp_warmstart(env_2, gamma=0.9, epsilon=EPSILON , max_step=100, num_eps = NUM_EPS, num_runs=NUM_RUNS, init_Q = Q2_pi_1)
+
+# QL_V2_eps_dict = {}
+# QL_V2_eps_dict['test'] = eps_r_V2
+
+# plot_line_dict(QL_V2_eps_dict, './temp2', 'test')
+
+# Vdiff12_lower, Qdiff12_lower, n = DPAgent_diff_21.policy_evaluation(policy1_converge, max_iter=100)
+# V = Vdiff12_lower + V1_pi_1
+
+
+
+
+# np.set_printoptions(precision=2)
+# print(V1_pi_1.reshape(7,7)
+# print(Vdiff12_lower.reshape(7,7))
+# print(V.reshape(7,7))
+# print(V2_pi_1.reshape(7,7))
+# print(V2_converge.reshape(7,7))
+# # V = V.reshape(7,7)
+# np.set_printoptions(precision=2)
+# print(V)
+
+raise ValueError
+
+
 
 V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
 V2_pi_2, Q2_pi_2 = V2_converge, Q2_converge
@@ -82,7 +166,7 @@ Qdiff13_gap = Qdiff13_upper - Qdiff13_lower
 
 V1_pi_1, Q1_pi_1 = V1_converge, Q1_converge
 V4_pi_4, Q4_pi_4 = V4_converge, Q4_converge
-V1_pi_4, Q1_pi_4 = DPAgent_1_converge.policy_evaluation(policy4_converge)
+V1_pi_4, Q1_pi_4 = DPAgent_1_converge.policy_evaluation(policy4_converge,)
 V4_pi_1, Q4_pi_1 = DPAgent_4_converge.policy_evaluation(policy1_converge)
 
 Vdiff14 = V4_pi_4 - V1_pi_1 
