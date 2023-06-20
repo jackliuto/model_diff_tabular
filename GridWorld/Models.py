@@ -117,11 +117,35 @@ class DPAgent:
             num_iter += 1
             if delta < self.theta or break_loop:
                 break
-            np.set_printoptions(precision=2)
+        policy = self.policy_improvement(V, det_policy)
+        Q = self.gen_q_table(V)
+        return policy, V, Q, steps, num_iter
+
+    def value_iteration_warmstart(self, max_iter=np.inf, max_steps=np.inf, det_policy = False, init_V=None):
+        V = init_V.copy()
+        break_loop = False
+        steps = 0 
+        num_iter = 0
+        while True and num_iter < max_iter:
+            delta = 0
+            V_prev = V.copy()
+            for s in range(self.env.nS): 
+                v = V[s]
+                V[s] = max(self.q_from_v(V_prev, s))
+                delta = max(delta, abs(V[s]-v))
+                steps += 1
+                if steps >= max_steps:
+                    break_loop = True
+            num_iter += 1
+            if delta < self.theta or break_loop:
+                break
+            # np.set_printoptions(precision=2)
+            # print(sum(abs(V - init_V)))
             
         policy = self.policy_improvement(V, det_policy)
         Q = self.gen_q_table(V)
         return policy, V, Q, steps, num_iter
+
 
 
 class QLearningAgent:

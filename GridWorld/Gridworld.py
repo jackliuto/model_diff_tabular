@@ -53,6 +53,7 @@ MAPS = {
         "FFFFFFF",
         "FFFFFFF",
         "FFFGFFG",
+
     ],
 
 
@@ -67,7 +68,7 @@ MAPS = {
 
     ],
 
-        "7x7_S77G00": [
+    "7x7_S77G00": [
         "GFFFFFF",
         "FFFFFFF",
         "FFFFFFF",

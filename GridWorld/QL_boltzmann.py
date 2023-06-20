@@ -110,9 +110,9 @@ GAMMA = 0.9
 ALPHA = 0.5
 EPSILON = 0.1
 TEMP = 0.01
-NUM_RUNS = 10
+NUM_RUNS = 50
 NUM_EPS = 100
-MAX_STEP = 20
+MAX_STEP = 50
 PPR_PSI = 1
 PPR_UPSILON = 0.95
 QL_V2_eps_dict = {}
@@ -124,9 +124,3 @@ run_ppr_exp(env=env_3, DPAgent=DPAgent_diff_31, source_policy=policy1_converge, 
 run_ppr_exp(env=env_4, DPAgent=DPAgent_diff_41, source_policy=policy1_converge, source_q=Q1_converge, psi=PPR_PSI, upsilon=PPR_UPSILON, \
                               converge_q=Q4_pi_1_c, optimal_q=Q4_converge, iter=100, iter_size=5, save_path='./results/QL_ppr_diff14.json')
 
-# run_lowerbound_exp(env=env_2, DPAgent=DPAgent_diff_21, source_policy=policy1_converge, source_q=Q1_converge, converge_q=Q2_pi_1_c, optimal_q=Q2_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True, save_path='./results/QL_lower_diff12_updateQLower.json')
-# run_lowerbound_exp(env=env_3, DPAgent=DPAgent_diff_31, source_policy=policy1_converge, source_q=Q1_converge, converge_q=Q3_pi_1_c, optimal_q=Q3_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True,save_path='./results/QL_lower_diff13_updateQLower.json')
-# run_lowerbound_exp(env=env_4, DPAgent=DPAgent_diff_41, source_policy=policy1_converge, source_q=Q1_converge,converge_q=Q4_pi_1_c, optimal_q=Q4_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True,save_path='./results/QL_lower_diff14_updateQLower.json')

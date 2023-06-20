@@ -9,18 +9,6 @@ from Models import DPAgent, QLearningAgent
 
 # np.random.seed(0)
 
-def run_QL_exp_warmstart(env, gamma=0.9, alpha=0.5, epsilon=0.1, max_step=20, num_eps = 50, num_runs = 10, explore='e-greedy', init_Q = []):
-    total_dis_r = []
-    for i in range(num_runs):
-        agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
-        # if len(init_q) > 0:
-        #     agent.warm_start_q(init_q)
-        dis_r = agent.run_warmstart(init_Q=init_Q, max_step=max_step, num_eps=num_eps, explore=explore)
-        total_dis_r.append(dis_r)
-    avg_dis_r = np.average(total_dis_r, axis=0)
-    return avg_dis_r
-
-
 
 RANDOM_START = False
 GAMMA = 0.9

@@ -55,20 +55,21 @@ V1_pi_4_c, Q1_pi_4_c, _ = DPAgent_1.policy_evaluation(policy4_converge)
 V4_pi_1_c, Q4_pi_1_c, _ = DPAgent_4.policy_evaluation(policy1_converge)
 
 
-def run_QL_exp_lowerbound(env, gamma=0.9, alpha=0.5, epsilon=0.1, max_step=20, \
-                          num_eps = 50, num_runs = 10, explore='e-greedy', update_q_lower=False, Q_lower = [], Q_optimal = []):
+def run_QL_exp_ppr(env, gamma=0.9, alpha=0.5, epsilon=0.1, psi=0.5, upsilon=0.95, max_step=20, \
+                          num_eps = 50, num_runs = 10, explore='ppr', Q_heur = [], Q_optimal = []):
     total_dis_r = []
     for i in range(num_runs):
         agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
         if len(Q_optimal) != 0:
             agent.warm_start_q(Q_optimal)
-        dis_r = agent.run_lowerbound(Q_lower=Q_lower, max_step=max_step, num_eps=num_eps, explore=explore, update_q_lower=update_q_lower)
+        dis_r = agent.run_ppr(Q_heur=Q_heur, max_step=max_step, num_eps=num_eps, psi=psi, upsilon=upsilon, \
+                              explore=explore)
         total_dis_r.append(dis_r)
     avg_dis_r = np.average(total_dis_r, axis=0)
     return avg_dis_r
 
-def run_lowerbound_exp(env, DPAgent, source_policy, source_q, 
-                       converge_q, optimal_q, iter, iter_size, update_q_lower, save_path):
+def run_ppr_exp(env, DPAgent, source_policy, source_q, psi, upsilon,
+                    converge_q, optimal_q, iter, iter_size, save_path):
     ## run 12 EXP
     Vdiff_lower_dict = {}
     Qdiff_lower_dict = {}
@@ -78,22 +79,22 @@ def run_lowerbound_exp(env, DPAgent, source_policy, source_q,
         Qdiff_lower_dict[i] = Qdiff_lower
 
     for k,v in Qdiff_lower_dict.items():
-        Q2_pi_1 = v + source_q
-        eps_r_V2 = run_QL_exp_lowerbound(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON , max_step=MAX_STEP, \
-                                         num_eps = NUM_EPS, num_runs=NUM_RUNS, update_q_lower=update_q_lower, Q_lower = Q2_pi_1,)
+        Q2_pi_1 = v ## + source_q ## del if only idff
+        eps_r_V2 = run_QL_exp_ppr(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON, psi=psi, upsilon=upsilon, max_step=MAX_STEP, \
+                                         num_eps = NUM_EPS, num_runs=NUM_RUNS, Q_heur = Q2_pi_1,)
         QL_V2_eps_dict[k] = list(eps_r_V2)
 
-    eps_r_V2_optimal = run_QL_exp_lowerbound(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON , max_step=MAX_STEP, \
-                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, update_q_lower=update_q_lower, Q_lower = converge_q)
+    eps_r_V2_optimal = run_QL_exp_ppr(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON, psi=psi, upsilon=upsilon, max_step=MAX_STEP, \
+                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, Q_heur = converge_q)
     QL_V2_eps_dict['converge'] = list(eps_r_V2_optimal)
 
     zero_start = np.zeros([env.nS, env.nA])
-    eps_r_V2_zero = run_QL_exp_lowerbound(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON , max_step=MAX_STEP, \
-                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, update_q_lower=update_q_lower, Q_lower = zero_start)
+    eps_r_V2_zero = run_QL_exp_ppr(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON, psi=psi, upsilon=upsilon, max_step=MAX_STEP, \
+                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, Q_heur = zero_start)
     QL_V2_eps_dict['zero'] = list(eps_r_V2_zero)
 
-    eps_r_V2_optimal = run_QL_exp_lowerbound(env, gamma=GAMMA, alpha=0, epsilon=EPSILON , max_step=MAX_STEP, \
-                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, update_q_lower=update_q_lower, Q_lower = zero_start, Q_optimal=optimal_q)
+    eps_r_V2_optimal = run_QL_exp_ppr(env, gamma=GAMMA, alpha=0, epsilon=EPSILON, psi=psi, upsilon=upsilon, max_step=MAX_STEP, \
+                                             num_eps = NUM_EPS, num_runs=NUM_RUNS, Q_heur = zero_start, Q_optimal=optimal_q)
     QL_V2_eps_dict['optimal'] = list(eps_r_V2_optimal)
 
     with open(save_path, "w") as outfile:
@@ -112,19 +113,14 @@ TEMP = 0.01
 NUM_RUNS = 10
 NUM_EPS = 50
 MAX_STEP = 50
+PPR_PSI = 1
+PPR_UPSILON = 0.95
 QL_V2_eps_dict = {}
 
+run_ppr_exp(env=env_2, DPAgent=DPAgent_diff_21, source_policy=policy1_converge, source_q=Q1_converge, psi=PPR_PSI, upsilon=PPR_UPSILON, \
+                              converge_q=Q2_pi_1_c, optimal_q=Q2_converge, iter=100, iter_size=5, save_path='./results/QL_ppr_diff12.json')
+run_ppr_exp(env=env_3, DPAgent=DPAgent_diff_31, source_policy=policy1_converge, source_q=Q1_converge, psi=PPR_PSI, upsilon=PPR_UPSILON, \
+                              converge_q=Q3_pi_1_c, optimal_q=Q3_converge, iter=100, iter_size=5, save_path='./results/QL_ppr_diff13.json')
+run_ppr_exp(env=env_4, DPAgent=DPAgent_diff_41, source_policy=policy1_converge, source_q=Q1_converge, psi=PPR_PSI, upsilon=PPR_UPSILON, \
+                              converge_q=Q4_pi_1_c, optimal_q=Q4_converge, iter=100, iter_size=5, save_path='./results/QL_ppr_diff14.json')
 
-run_lowerbound_exp(env=env_2, DPAgent=DPAgent_diff_21, source_policy=policy1_converge, source_q=Q1_converge, \
-                              converge_q=Q2_pi_1_c, optimal_q=Q2_converge, iter=100, iter_size=5, update_q_lower=False, save_path='./results/QL_lower_diff12.json')
-run_lowerbound_exp(env=env_3, DPAgent=DPAgent_diff_31, source_policy=policy1_converge, source_q=Q1_converge, \
-                              converge_q=Q3_pi_1_c, optimal_q=Q3_converge, iter=100, iter_size=5, update_q_lower=False, save_path='./results/QL_lower_diff13.json')
-run_lowerbound_exp(env=env_4, DPAgent=DPAgent_diff_41, source_policy=policy1_converge, source_q=Q1_converge,\
-                              converge_q=Q4_pi_1_c, optimal_q=Q4_converge, iter=100, iter_size=5, update_q_lower=False, save_path='./results/QL_lower_diff14.json')
-
-# run_lowerbound_exp(env=env_2, DPAgent=DPAgent_diff_21, source_policy=policy1_converge, source_q=Q1_converge, converge_q=Q2_pi_1_c, optimal_q=Q2_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True, save_path='./results/QL_lower_diff12_updateQLower.json')
-# run_lowerbound_exp(env=env_3, DPAgent=DPAgent_diff_31, source_policy=policy1_converge, source_q=Q1_converge, converge_q=Q3_pi_1_c, optimal_q=Q3_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True,save_path='./results/QL_lower_diff13_updateQLower.json')
-# run_lowerbound_exp(env=env_4, DPAgent=DPAgent_diff_41, source_policy=policy1_converge, source_q=Q1_converge,converge_q=Q4_pi_1_c, optimal_q=Q4_converge, \
-#                               iter=100, iter_size=5, update_q_lower=True,save_path='./results/QL_lower_diff14_updateQLower.json')
