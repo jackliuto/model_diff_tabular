@@ -54,6 +54,11 @@ V4_pi_4, Q4_pi_4 = V4_converge, Q4_converge
 V1_pi_4_c, Q1_pi_4_c, _ = DPAgent_1.policy_evaluation(policy4_converge)
 V4_pi_1_c, Q4_pi_1_c, _ = DPAgent_4.policy_evaluation(policy1_converge)
 
+print('here')
+
+
+raise ValueError
+
 
 def run_QL_exp_lowerbound(env, gamma=0.9, alpha=0.5, epsilon=0.1, max_step=20, \
                           num_eps = 50, num_runs = 10, explore='e-greedy', update_q_lower=False, Q_init = [], Q_lower = []):

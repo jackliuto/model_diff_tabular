@@ -220,8 +220,8 @@ class QLearningAgent:
             self.Q[beg_s][a] = Q
         else:
             self.Q[beg_s][a] = Q_lower
-        if update_q_lower:
-            self.Q_lower[beg_s][a] = self.Q_lower[beg_s][a] + self.alpha * (r + self.gamma * np.max(self.Q_lower[end_s]) - self.Q_lower[beg_s][a])
+        # if update_q_lower:
+        #     self.Q_lower[beg_s][a] = self.Q_lower[beg_s][a] + self.alpha * (r + self.gamma * np.max(self.Q_lower[end_s]) - self.Q_lower[beg_s][a])
 
         
     def update_policy(self, s):
@@ -251,7 +251,12 @@ class QLearningAgent:
             dis_reward.append(dis_r)
         return dis_reward
 
-    def run_lowerbound(self, Q_lower, max_step, num_eps, explore='e-greedy', update_q_lower=False):
+    def run_lowerbound(self, Q_init, Q_lower, max_step, num_eps ,explore='e-greedy', update_q_lower=False):
+
+        if len(Q_init) != 0:
+            self.warm_start_q(Q_init)
+        else:
+            self.warm_start_q(np.zeros([self.env.nS, self.env.nA]))
         dis_reward = []
         self.Q_lower = Q_lower
         for i in range(num_eps):
